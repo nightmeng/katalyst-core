@@ -39,6 +39,7 @@ type MetaServerConfiguration struct {
 	KubeletPodCacheSyncBurstBulk int
 	KubeletConfigEndpoint        string
 	KubeletPodsEndpoint          string
+	KubeletSummaryEndpoint       string
 	APIAuthTokenFile             string
 
 	RemoteRuntimeEndpoint     string

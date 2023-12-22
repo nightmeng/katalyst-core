@@ -22,6 +22,7 @@ package agent // import "github.com/kubewharf/katalyst-core/pkg/metaserver/agent
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/external/summary"
 	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,6 +95,7 @@ func NewMetaAgent(conf *config.Configuration, clientSet *client.GenericClientSet
 
 	if conf.EnableMetricsFetcher {
 		metaAgent.MetricsFetcher = malachite.NewMalachiteMetricsFetcher(emitter, metaAgent, conf)
+		metaAgent.MetricsFetcher.RegisterExternalMetric(summary.ExternalMetricFunc(emitter, conf))
 	} else {
 		metaAgent.MetricsFetcher = metric.NewFakeMetricsFetcher(emitter)
 	}

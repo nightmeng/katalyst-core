@@ -18,6 +18,7 @@ package metaserver
 
 import (
 	"context"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite"
 	"testing"
 	"time"
 
@@ -33,7 +34,6 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/config"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/cnr"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/malachite"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/node"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/pod"
 	dynamicconfig "github.com/kubewharf/katalyst-core/pkg/metaserver/config"

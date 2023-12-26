@@ -19,6 +19,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -100,7 +101,7 @@ func generateTestConfiguration(t *testing.T, checkpointDir, stateFileDir string)
 	return conf
 }
 
-func newTestMemoryAdvisor(t *testing.T, pods []*v1.Pod, checkpointDir, stateFileDir string, fetcher metric.MetricsFetcher, plugins []types.MemoryAdvisorPluginName) (*memoryResourceAdvisor, metacache.MetaCache) {
+func newTestMemoryAdvisor(t *testing.T, pods []*v1.Pod, checkpointDir, stateFileDir string, fetcher types2.MetricsFetcher, plugins []types.MemoryAdvisorPluginName) (*memoryResourceAdvisor, metacache.MetaCache) {
 	conf := generateTestConfiguration(t, checkpointDir, stateFileDir)
 	if len(plugins) == 0 {
 		conf.MemoryAdvisorPlugins = []types.MemoryAdvisorPluginName{memadvisorplugin.CacheReaper}

@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -30,7 +31,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/malachite/types"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/pod"
 	"github.com/kubewharf/katalyst-core/pkg/util/cgroup/common"
 )

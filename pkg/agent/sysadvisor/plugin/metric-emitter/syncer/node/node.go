@@ -19,6 +19,7 @@ package node
 import (
 	"context"
 	"fmt"
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -34,7 +35,6 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/custom-metric/store/data"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	metricspool "github.com/kubewharf/katalyst-core/pkg/metrics/metrics-pool"
 	"github.com/kubewharf/katalyst-core/pkg/util/general"
@@ -95,12 +95,12 @@ func (n *MetricSyncerNode) Name() string {
 }
 
 func (n *MetricSyncerNode) Run(ctx context.Context) {
-	rChan := make(chan metric.NotifiedResponse, 20)
+	rChan := make(chan types2.NotifiedResponse, 20)
 
 	// there is no need to deRegister for node-related metric
 	for rawMetricName := range n.metricMapping {
 		klog.Infof("register raw node metric: %v", rawMetricName)
-		n.metaServer.MetricsFetcher.RegisterNotifier(metric.MetricsScopeNode, metric.NotifiedRequest{
+		n.metaServer.MetricsFetcher.RegisterNotifier(types2.MetricsScopeNode, types2.NotifiedRequest{
 			MetricName: rawMetricName,
 		}, rChan)
 	}
@@ -112,7 +112,7 @@ func (n *MetricSyncerNode) Run(ctx context.Context) {
 }
 
 // receiveRawNode receives notified response from raw data source
-func (n *MetricSyncerNode) receiveRawNode(ctx context.Context, rChan chan metric.NotifiedResponse) {
+func (n *MetricSyncerNode) receiveRawNode(ctx context.Context, rChan chan types2.NotifiedResponse) {
 	for {
 		select {
 		case response := <-rChan:

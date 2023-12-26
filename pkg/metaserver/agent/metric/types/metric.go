@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package metric
+package types
 
 import (
 	"context"
@@ -87,15 +87,15 @@ type MetricsReader interface {
 	GetCgroupMetric(cgroupPath, metricName string) (metric.MetricData, error)
 	// GetCgroupNumaMetric get NUMA metric of qos class: /kubepods/burstable, /kubepods/besteffort, etc.
 	GetCgroupNumaMetric(cgroupPath, numaNode, metricName string) (metric.MetricData, error)
+}
 
+type MetricsProvisioner interface {
+	// Run starts the preparing logic to collect node metadata.
+	Run(ctx context.Context)
 	HasSynced() bool
 }
 
-// MetricsFetcher is used to get Node and Pod metrics.
-type MetricsFetcher interface {
-	// Run starts the preparing logic to collect node metadata.
-	Run(ctx context.Context)
-
+type MetricsNotifierManager interface {
 	// RegisterNotifier register a channel for raw metric, any time when metric
 	// changes, send a data into this given channel along with current time, and
 	// we will return a unique key to help with deRegister logic.
@@ -104,10 +104,20 @@ type MetricsFetcher interface {
 	// is at, but it indeed is the most precise time katalyst system can provide.
 	RegisterNotifier(scope MetricsScope, req NotifiedRequest, response chan NotifiedResponse) string
 	DeRegisterNotifier(scope MetricsScope, key string)
+	Notify()
+}
 
+type ExternalMetricManager interface {
 	// RegisterExternalMetric register a function to set metric that can
 	// only be obtained from external sources
 	RegisterExternalMetric(f func(store *metric.MetricStore))
+	Sample()
+}
 
+// MetricsFetcher is used to get Node and Pod metrics.
+type MetricsFetcher interface {
 	MetricsReader
+	MetricsProvisioner
+	MetricsNotifierManager
+	ExternalMetricManager
 }

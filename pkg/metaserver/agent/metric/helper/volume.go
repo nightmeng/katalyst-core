@@ -1,13 +1,13 @@
 package helper
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/general"
 	"time"
 )
 
-func GetVolumeMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, podUID, volumeName, metricName string, expireAt time.Time) (float64, error) {
+func GetVolumeMetric(metricsFetcher types.MetricsFetcher, emitter metrics.MetricEmitter, podUID, volumeName, metricName string, expireAt time.Time) (float64, error) {
 	metricData, err := metricsFetcher.GetPodVolumeMetric(podUID, volumeName, metricName)
 	if err != nil {
 		general.Errorf(errMsgGetPodVolumeMetrics, podUID, volumeName, metricName, err)

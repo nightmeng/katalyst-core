@@ -17,6 +17,7 @@ limitations under the License.
 package headroomassembler
 
 import (
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -61,7 +62,7 @@ func generateTestConfiguration(t *testing.T, checkpointDir, stateFileDir string)
 }
 
 func generateTestMetaServer(t *testing.T, cnr *v1alpha1.CustomNodeResource, podList []*v1.Pod,
-	metricsFetcher metric.MetricsFetcher) *metaserver.MetaServer {
+	metricsFetcher types2.MetricsFetcher) *metaserver.MetaServer {
 	// numa node0 cpu(s): 0-23,48-71
 	// numa node1 cpu(s): 24-47,72-95
 	cpuTopology, err := machine.GenerateDummyCPUTopology(96, 2, 2)

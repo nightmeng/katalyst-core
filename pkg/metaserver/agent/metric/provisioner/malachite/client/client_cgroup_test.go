@@ -18,13 +18,13 @@ package client
 
 import (
 	"encoding/json"
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/malachite/types"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/pod"
 )
 
@@ -32,55 +32,55 @@ var subSystemGroupsV1Data []byte
 var subSystemGroupsV2Data []byte
 
 var (
-	subSystemGroupsV1 = &types.SubSystemGroupsV1{
-		Memory: types.MemoryCgV1{
+	subSystemGroupsV1 = &types2.SubSystemGroupsV1{
+		Memory: types2.MemoryCgV1{
 			V1: struct {
-				MemoryV1Data types.MemoryCgDataV1 `json:"V1"`
-			}(struct{ MemoryV1Data types.MemoryCgDataV1 }{MemoryV1Data: types.MemoryCgDataV1{}}),
+				MemoryV1Data types2.MemoryCgDataV1 `json:"V1"`
+			}(struct{ MemoryV1Data types2.MemoryCgDataV1 }{MemoryV1Data: types2.MemoryCgDataV1{}}),
 		},
-		Blkio: types.BlkioCgV1{
+		Blkio: types2.BlkioCgV1{
 			V1: struct {
-				BlkIOData types.BlkIOCgDataV1 `json:"V1"`
-			}(struct{ BlkIOData types.BlkIOCgDataV1 }{BlkIOData: types.BlkIOCgDataV1{}}),
+				BlkIOData types2.BlkIOCgDataV1 `json:"V1"`
+			}(struct{ BlkIOData types2.BlkIOCgDataV1 }{BlkIOData: types2.BlkIOCgDataV1{}}),
 		},
-		NetCls: types.NetClsCg{
-			NetData: types.NetClsCgData{},
+		NetCls: types2.NetClsCg{
+			NetData: types2.NetClsCgData{},
 		},
-		Cpuset: types.CpusetCgV1{
+		Cpuset: types2.CpusetCgV1{
 			V1: struct {
-				CPUSetData types.CPUSetCgDataV1 `json:"V1"`
-			}(struct{ CPUSetData types.CPUSetCgDataV1 }{CPUSetData: types.CPUSetCgDataV1{}}),
+				CPUSetData types2.CPUSetCgDataV1 `json:"V1"`
+			}(struct{ CPUSetData types2.CPUSetCgDataV1 }{CPUSetData: types2.CPUSetCgDataV1{}}),
 		},
-		Cpuacct: types.CpuacctCgV1{
+		Cpuacct: types2.CpuacctCgV1{
 			V1: struct {
-				CPUData types.CPUCgDataV1 `json:"V1"`
-			}(struct{ CPUData types.CPUCgDataV1 }{CPUData: types.CPUCgDataV1{}}),
+				CPUData types2.CPUCgDataV1 `json:"V1"`
+			}(struct{ CPUData types2.CPUCgDataV1 }{CPUData: types2.CPUCgDataV1{}}),
 		},
 	}
 
-	subSystemGroupsV2 = &types.SubSystemGroupsV2{
-		Memory: types.MemoryCgV2{
+	subSystemGroupsV2 = &types2.SubSystemGroupsV2{
+		Memory: types2.MemoryCgV2{
 			V2: struct {
-				MemoryData types.MemoryCgDataV2 `json:"V2"`
-			}(struct{ MemoryData types.MemoryCgDataV2 }{MemoryData: types.MemoryCgDataV2{}}),
+				MemoryData types2.MemoryCgDataV2 `json:"V2"`
+			}(struct{ MemoryData types2.MemoryCgDataV2 }{MemoryData: types2.MemoryCgDataV2{}}),
 		},
-		Blkio: types.BlkioCgV2{
+		Blkio: types2.BlkioCgV2{
 			V2: struct {
-				BlkIOData types.BlkIOCgDataV2 `json:"V2"`
-			}(struct{ BlkIOData types.BlkIOCgDataV2 }{BlkIOData: types.BlkIOCgDataV2{}}),
+				BlkIOData types2.BlkIOCgDataV2 `json:"V2"`
+			}(struct{ BlkIOData types2.BlkIOCgDataV2 }{BlkIOData: types2.BlkIOCgDataV2{}}),
 		},
-		NetCls: types.NetClsCg{
-			NetData: types.NetClsCgData{},
+		NetCls: types2.NetClsCg{
+			NetData: types2.NetClsCgData{},
 		},
-		Cpuset: types.CpusetCgV2{
+		Cpuset: types2.CpusetCgV2{
 			V2: struct {
-				CPUSetData types.CPUSetCgDataV2 `json:"V2"`
-			}(struct{ CPUSetData types.CPUSetCgDataV2 }{CPUSetData: types.CPUSetCgDataV2{}}),
+				CPUSetData types2.CPUSetCgDataV2 `json:"V2"`
+			}(struct{ CPUSetData types2.CPUSetCgDataV2 }{CPUSetData: types2.CPUSetCgDataV2{}}),
 		},
-		Cpuacct: types.CpuacctCgV2{
+		Cpuacct: types2.CpuacctCgV2{
 			V2: struct {
-				CPUData types.CPUCgDataV2 `json:"V2"`
-			}(struct{ CPUData types.CPUCgDataV2 }{CPUData: types.CPUCgDataV2{}}),
+				CPUData types2.CPUCgDataV2 `json:"V2"`
+			}(struct{ CPUData types2.CPUCgDataV2 }{CPUData: types2.CPUCgDataV2{}}),
 		},
 	}
 )
@@ -93,17 +93,17 @@ func init() {
 func TestGetCgroupStats(t *testing.T) {
 	t.Parallel()
 
-	cgroupData := map[string]*types.MalachiteCgroupResponse{
+	cgroupData := map[string]*types2.MalachiteCgroupResponse{
 		"v1-path": {
 			Status: 0,
-			Data: types.CgroupDataInner{
+			Data: types2.CgroupDataInner{
 				CgroupType:      "V1",
 				SubSystemGroups: subSystemGroupsV1Data,
 			},
 		},
 		"v2-path": {
 			Status: 0,
-			Data: types.CgroupDataInner{
+			Data: types2.CgroupDataInner{
 				CgroupType:      "V2",
 				SubSystemGroups: subSystemGroupsV2Data,
 			},

@@ -32,6 +32,7 @@ package metric
 
 import (
 	"context"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -42,7 +43,7 @@ import (
 )
 
 // NewFakeMetricsFetcher returns a fake MetricsFetcher.
-func NewFakeMetricsFetcher(emitter metrics.MetricEmitter) MetricsFetcher {
+func NewFakeMetricsFetcher(emitter metrics.MetricEmitter) types.MetricsFetcher {
 	return &FakeMetricsFetcher{
 		metricStore: metric.NewMetricStore(),
 		emitter:     emitter,
@@ -75,11 +76,11 @@ func (f *FakeMetricsFetcher) HasSynced() bool {
 	return f.hasSynced
 }
 
-func (f *FakeMetricsFetcher) RegisterNotifier(scope MetricsScope, req NotifiedRequest, response chan NotifiedResponse) string {
+func (f *FakeMetricsFetcher) RegisterNotifier(scope types.MetricsScope, req types.NotifiedRequest, response chan types.NotifiedResponse) string {
 	return ""
 }
 
-func (f *FakeMetricsFetcher) DeRegisterNotifier(scope MetricsScope, key string) {}
+func (f *FakeMetricsFetcher) DeRegisterNotifier(scope types.MetricsScope, key string) {}
 
 func (f *FakeMetricsFetcher) RegisterExternalMetric(fu func(store *metric.MetricStore)) {
 	f.Lock()

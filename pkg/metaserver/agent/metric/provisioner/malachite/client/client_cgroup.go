@@ -19,19 +19,18 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/malachite/types"
 )
 
-func (c *MalachiteClient) GetCgroupStats(cgroupPath string) (*types.MalachiteCgroupInfo, error) {
+func (c *MalachiteClient) GetCgroupStats(cgroupPath string) (*types2.MalachiteCgroupInfo, error) {
 	cgroupStatsRaw, err := c.getCgroupStats(cgroupPath)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp := &types.MalachiteCgroupResponse{}
+	rsp := &types2.MalachiteCgroupResponse{}
 	if err := json.Unmarshal(cgroupStatsRaw, rsp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cgroup status raw data, err %s", err)
 	}
@@ -40,18 +39,18 @@ func (c *MalachiteClient) GetCgroupStats(cgroupPath string) (*types.MalachiteCgr
 		return nil, fmt.Errorf("cgroup %s stats status is not ok, %d", cgroupPath, rsp.Status)
 	}
 
-	cgroupInfo := &types.MalachiteCgroupInfo{
+	cgroupInfo := &types2.MalachiteCgroupInfo{
 		MountPoint: rsp.Data.MountPoint,
 		UserPath:   rsp.Data.UserPath,
 		CgroupType: rsp.Data.CgroupType,
 	}
 
 	if cgroupInfo.CgroupType == "V1" {
-		subsysV1 := &types.SubSystemGroupsV1{}
+		subsysV1 := &types2.SubSystemGroupsV1{}
 		if err := json.Unmarshal(rsp.Data.SubSystemGroups, subsysV1); err != nil {
 			return nil, fmt.Errorf("failed to Unmarshal cgroup v1 info, err %s", err)
 		}
-		cgV1 := &types.MalachiteCgroupV1Info{
+		cgV1 := &types2.MalachiteCgroupV1Info{
 			Memory: &subsysV1.Memory.V1.MemoryV1Data,
 			Blkio:  &subsysV1.Blkio.V1.BlkIOData,
 			Cpu:    &subsysV1.Cpuacct.V1.CPUData,
@@ -60,11 +59,11 @@ func (c *MalachiteClient) GetCgroupStats(cgroupPath string) (*types.MalachiteCgr
 		}
 		cgroupInfo.V1 = cgV1
 	} else if cgroupInfo.CgroupType == "V2" {
-		subsysV2 := &types.SubSystemGroupsV2{}
+		subsysV2 := &types2.SubSystemGroupsV2{}
 		if err := json.Unmarshal(rsp.Data.SubSystemGroups, subsysV2); err != nil {
 			return nil, fmt.Errorf("failed to Unmarshal cgroup v2 info, err %s", err)
 		}
-		cgV2 := &types.MalachiteCgroupV2Info{
+		cgV2 := &types2.MalachiteCgroupV2Info{
 			Memory: &subsysV2.Memory.V2.MemoryData,
 			Blkio:  &subsysV2.Blkio.V2.BlkIOData,
 			Cpu:    &subsysV2.Cpuacct.V2.CPUData,

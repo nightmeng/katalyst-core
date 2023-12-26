@@ -19,6 +19,7 @@ package cpueviction
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"os"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeMetaServer(metricsFetcher metric.MetricsFetcher, cpuTopology *machine.CPUTopology) *metaserver.MetaServer {
+func makeMetaServer(metricsFetcher types.MetricsFetcher, cpuTopology *machine.CPUTopology) *metaserver.MetaServer {
 	metaServer := &metaserver.MetaServer{
 		MetaAgent: &agent.MetaAgent{},
 	}

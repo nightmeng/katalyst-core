@@ -18,18 +18,18 @@ package helper
 
 import (
 	"errors"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"strconv"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 )
 
 // GetPodMetric returns the value of a pod-level metric.
 // And the value of a pod-level metric is calculated by summing the metric values for all containers in that pod.
-func GetPodMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, pod *v1.Pod, metricName string, numaID int, expireAt time.Time) (float64, error) {
+func GetPodMetric(metricsFetcher types.MetricsFetcher, emitter metrics.MetricEmitter, pod *v1.Pod, metricName string, numaID int, expireAt time.Time) (float64, error) {
 	if pod == nil {
 		return 0, errors.New("invalid pod")
 	}

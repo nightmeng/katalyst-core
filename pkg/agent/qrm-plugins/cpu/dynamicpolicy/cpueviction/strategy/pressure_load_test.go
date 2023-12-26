@@ -19,6 +19,7 @@ package strategy
 import (
 	"context"
 	"fmt"
+	types2 "github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"math"
 	"os"
 	"testing"
@@ -58,7 +59,7 @@ const (
 	defaultReservedForSystem                        = 0
 )
 
-func makeMetaServer(metricsFetcher metric.MetricsFetcher, cpuTopology *machine.CPUTopology) *metaserver.MetaServer {
+func makeMetaServer(metricsFetcher types2.MetricsFetcher, cpuTopology *machine.CPUTopology) *metaserver.MetaServer {
 	metaServer := &metaserver.MetaServer{
 		MetaAgent: &agent.MetaAgent{},
 	}

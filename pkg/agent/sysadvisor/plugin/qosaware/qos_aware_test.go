@@ -18,6 +18,7 @@ package qosaware
 
 import (
 	"context"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -75,7 +76,7 @@ func generateTestMetaServer(t *testing.T, conf *config.Configuration) *metaserve
 	return metaServer
 }
 
-func generateTestMetaCache(t *testing.T, conf *config.Configuration, metricsReader metric.MetricsReader) *metacache.MetaCacheImp {
+func generateTestMetaCache(t *testing.T, conf *config.Configuration, metricsReader types.MetricsReader) *metacache.MetaCacheImp {
 	metaCache, err := metacache.NewMetaCacheImp(conf, metricspool.DummyMetricsEmitterPool{}, metricsReader)
 	require.NoError(t, err)
 	require.NotNil(t, metaCache)

@@ -19,16 +19,16 @@ package malachite
 // for those metrics need extra calculation logic,
 // we will put them in a separate file here
 import (
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"time"
 
 	"github.com/kubewharf/katalyst-core/pkg/consts"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/malachite/types"
 	"github.com/kubewharf/katalyst-core/pkg/util/metric"
 )
 
 // processContainerMemBandwidth handles memory bandwidth (read/write) rate in a period while,
 // and it will need the previously collected data to do this
-func (m *MalachiteMetricsFetcher) processContainerMemBandwidth(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
+func (m *MalachiteMetricsProvisioner) processContainerMemBandwidth(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
 	var (
 		lastOCRReadDRAMsMetric, _ = m.metricStore.GetContainerMetric(podUID, containerName, consts.MetricOCRReadDRAMsContainer)
 		lastIMCWritesMetric, _    = m.metricStore.GetContainerMetric(podUID, containerName, consts.MetricIMCWriteContainer)
@@ -90,7 +90,7 @@ func (m *MalachiteMetricsFetcher) processContainerMemBandwidth(podUID, container
 
 // processContainerCPURelevantRate is used to calculate some container cpu-relevant rates.
 // this would be executed before setting the latest values into metricStore.
-func (m *MalachiteMetricsFetcher) processContainerCPURelevantRate(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
+func (m *MalachiteMetricsProvisioner) processContainerCPURelevantRate(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
 	lastMetricValueFn := func(metricName string) float64 {
 		lastMetric, _ := m.metricStore.GetContainerMetric(podUID, containerName, metricName)
 		return lastMetric.Value
@@ -149,7 +149,7 @@ func (m *MalachiteMetricsFetcher) processContainerCPURelevantRate(podUID, contai
 	}, int64(lastUpdateTimeInSec), curUpdateTime)
 }
 
-func (m *MalachiteMetricsFetcher) processContainerMemRelevantRate(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
+func (m *MalachiteMetricsProvisioner) processContainerMemRelevantRate(podUID, containerName string, cgStats *types.MalachiteCgroupInfo, lastUpdateTimeInSec float64) {
 	lastMetricValueFn := func(metricName string) float64 {
 		lastMetric, _ := m.metricStore.GetContainerMetric(podUID, containerName, metricName)
 		return lastMetric.Value
@@ -193,7 +193,7 @@ func (m *MalachiteMetricsFetcher) processContainerMemRelevantRate(podUID, contai
 // setContainerRateMetric is used to set rate metric in container level.
 // This method will check if the metric is really updated, and decide weather to update metric in metricStore.
 // The method could help avoid lots of meaningless "zero" value.
-func (m *MalachiteMetricsFetcher) setContainerRateMetric(podUID, containerName, targetMetricName string, deltaValueFunc func() float64, lastUpdateTime, curUpdateTime int64) {
+func (m *MalachiteMetricsProvisioner) setContainerRateMetric(podUID, containerName, targetMetricName string, deltaValueFunc func() float64, lastUpdateTime, curUpdateTime int64) {
 	timeDeltaInSec := curUpdateTime - lastUpdateTime
 	if lastUpdateTime == 0 || timeDeltaInSec <= 0 {
 		// Return directly when the following situations happen:

@@ -32,6 +32,8 @@ func sample(ctx context.Context, client *client.KubeletClient, emitter metrics.M
 		return
 	}
 
+	processNodeRootfsStats(store, summary.Node.Fs)
+
 	for _, podStats := range summary.Pods {
 		for _, volumeStats := range podStats.VolumeStats {
 			processVolumeStats(store, podStats.PodRef.UID, &volumeStats)
@@ -46,41 +48,69 @@ func sample(ctx context.Context, client *client.KubeletClient, emitter metrics.M
 	}
 }
 
+func processNodeRootfsStats(store *utilmetric.MetricStore, nodeRootfsStats *statsapi.FsStats) {
+	updateTime := nodeRootfsStats.Time.Time
+	if nodeRootfsStats.AvailableBytes != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: float64(*nodeRootfsStats.AvailableBytes), Time: &updateTime})
+	}
+	if nodeRootfsStats.CapacityBytes != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: float64(*nodeRootfsStats.CapacityBytes), Time: &updateTime})
+	}
+	if nodeRootfsStats.UsedBytes != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.UsedBytes), Time: &updateTime})
+	}
+	if nodeRootfsStats.InodesFree != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesFree), Time: &updateTime})
+	}
+	if nodeRootfsStats.InodesUsed != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesUsed), Time: &updateTime})
+	}
+	if nodeRootfsStats.Inodes != nil {
+		store.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: float64(*nodeRootfsStats.Inodes), Time: &updateTime})
+	}
+}
+
 func processVolumeStats(store *utilmetric.MetricStore, podUID string, volumeStats *statsapi.VolumeStats) {
 	updateTime := volumeStats.Time.Time
 	if volumeStats.AvailableBytes != nil {
-		store.SetVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeAvailable, utilmetric.MetricData{Value: float64(*volumeStats.AvailableBytes), Time: &updateTime})
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeAvailable, utilmetric.MetricData{Value: float64(*volumeStats.AvailableBytes), Time: &updateTime})
 	}
 	if volumeStats.CapacityBytes != nil {
-		store.SetVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeCapacity, utilmetric.MetricData{Value: float64(*volumeStats.CapacityBytes), Time: &updateTime})
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeCapacity, utilmetric.MetricData{Value: float64(*volumeStats.CapacityBytes), Time: &updateTime})
+	}
+	if volumeStats.UsedBytes != nil {
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeUsed, utilmetric.MetricData{Value: float64(*volumeStats.UsedBytes), Time: &updateTime})
 	}
 	if volumeStats.Inodes != nil {
-		store.SetVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodes, utilmetric.MetricData{Value: float64(*volumeStats.Inodes), Time: &updateTime})
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodes, utilmetric.MetricData{Value: float64(*volumeStats.Inodes), Time: &updateTime})
 	}
 	if volumeStats.InodesFree != nil {
-		store.SetVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodesFree, utilmetric.MetricData{Value: float64(*volumeStats.InodesFree), Time: &updateTime})
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodesFree, utilmetric.MetricData{Value: float64(*volumeStats.InodesFree), Time: &updateTime})
 	}
 	if volumeStats.InodesUsed != nil {
-		store.SetVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodesUsed, utilmetric.MetricData{Value: float64(*volumeStats.InodesUsed), Time: &updateTime})
+		store.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeInodesUsed, utilmetric.MetricData{Value: float64(*volumeStats.InodesUsed), Time: &updateTime})
 	}
 }
 
 func processContainerRootfsStats(store *utilmetric.MetricStore, podUID string, containerStats *statsapi.ContainerStats) {
 	updateTime := containerStats.Rootfs.Time.Time
 	if containerStats.Rootfs.AvailableBytes != nil {
-		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsRootfsAvailable, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.AvailableBytes), Time: &updateTime})
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsAvailable, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.AvailableBytes), Time: &updateTime})
 	}
 	if containerStats.Rootfs.CapacityBytes != nil {
-		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsRootfsCapacity, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.CapacityBytes), Time: &updateTime})
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsCapacity, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.CapacityBytes), Time: &updateTime})
+	}
+	if containerStats.Rootfs.UsedBytes != nil {
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsUsed, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.UsedBytes), Time: &updateTime})
 	}
 	if containerStats.Rootfs.Inodes != nil {
-		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsRootfsInodes, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.Inodes), Time: &updateTime})
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsInodes, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.Inodes), Time: &updateTime})
 	}
 	if containerStats.Rootfs.InodesFree != nil {
-		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsRootfsInodesFree, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.InodesFree), Time: &updateTime})
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsInodesFree, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.InodesFree), Time: &updateTime})
 	}
 	if containerStats.Rootfs.InodesUsed != nil {
-		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsRootfsInodesUsed, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.InodesUsed), Time: &updateTime})
+		store.SetContainerMetric(podUID, containerStats.Name, consts.MetricsContainerRootfsInodesUsed, utilmetric.MetricData{Value: float64(*containerStats.Rootfs.InodesUsed), Time: &updateTime})
 	}
 }
 

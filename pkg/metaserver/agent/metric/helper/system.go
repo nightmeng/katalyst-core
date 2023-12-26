@@ -19,6 +19,7 @@ package helper
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/kubewharf/katalyst-core/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
@@ -29,28 +30,28 @@ import (
 
 // GetWatermarkMetrics returns system-water mark related metrics (config)
 // if numa node is specified, return config in this numa; otherwise return system-level config
-func GetWatermarkMetrics(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, numaID int) (free, total, scaleFactor float64, err error) {
+func GetWatermarkMetrics(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, numaID int, expireAt time.Time) (free, total, scaleFactor float64, err error) {
 	if numaID >= 0 {
-		free, err = GetNumaMetric(metricsFetcher, emitter, consts.MetricMemFreeNuma, numaID)
+		free, err = GetNumaMetric(metricsFetcher, emitter, consts.MetricMemFreeNuma, numaID, expireAt)
 		if err != nil {
 			return 0, 0, 0, fmt.Errorf(errMsgGetNumaMetrics, consts.MetricMemFreeNuma, numaID, err)
 		}
-		total, err = GetNumaMetric(metricsFetcher, emitter, consts.MetricMemTotalNuma, numaID)
+		total, err = GetNumaMetric(metricsFetcher, emitter, consts.MetricMemTotalNuma, numaID, expireAt)
 		if err != nil {
 			return 0, 0, 0, fmt.Errorf(errMsgGetNumaMetrics, consts.MetricMemFreeNuma, numaID, err)
 		}
 	} else {
-		free, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemFreeSystem)
+		free, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemFreeSystem, expireAt)
 		if err != nil {
 			return 0, 0, 0, fmt.Errorf(errMsgGetSystemMetrics, consts.MetricMemFreeSystem, err)
 		}
-		total, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemTotalSystem)
+		total, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemTotalSystem, expireAt)
 		if err != nil {
 			return 0, 0, 0, fmt.Errorf(errMsgGetSystemMetrics, consts.MetricMemTotalSystem, err)
 		}
 	}
 
-	scaleFactor, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemScaleFactorSystem)
+	scaleFactor, err = GetNodeMetric(metricsFetcher, emitter, consts.MetricMemScaleFactorSystem, expireAt)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf(errMsgGetSystemMetrics, consts.MetricMemScaleFactorSystem, err)
 	}
@@ -58,10 +59,13 @@ func GetWatermarkMetrics(metricsFetcher metric.MetricsFetcher, emitter metrics.M
 	return free, total, scaleFactor, nil
 }
 
-func GetNodeMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string) (metricutil.MetricData, error) {
+func GetNodeMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, expireAt time.Time) (metricutil.MetricData, error) {
 	metricData, err := metricsFetcher.GetNodeMetric(metricName)
 	if err != nil {
 		return metricutil.MetricData{}, fmt.Errorf(errMsgGetSystemMetrics, metricName, err)
+	}
+	if !expireAt.IsZero() && metricData.Time.Before(expireAt) {
+		return metricutil.MetricData{}, errMetricExpired
 	}
 	_ = emitter.StoreFloat64(metricsNameSystemMetric, metricData.Value, metrics.MetricTypeNameRaw,
 		metrics.ConvertMapToTags(map[string]string{
@@ -70,19 +74,23 @@ func GetNodeMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics
 	return metricData, nil
 }
 
-func GetNodeMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string) (float64, error) {
-	metricWithTime, err := GetNodeMetricWithTime(metricsFetcher, emitter, metricName)
+func GetNodeMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, expireAt time.Time) (float64, error) {
+	metricWithTime, err := GetNodeMetricWithTime(metricsFetcher, emitter, metricName, expireAt)
 	if err != nil {
 		return 0, err
 	}
 	return metricWithTime.Value, err
 }
 
-func GetNumaMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, numaID int) (metricutil.MetricData, error) {
+func GetNumaMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, numaID int, expireAt time.Time) (metricutil.MetricData, error) {
 	metricData, err := metricsFetcher.GetNumaMetric(numaID, metricName)
 	if err != nil {
 		general.Errorf(errMsgGetNumaMetrics, metricName, numaID, err)
 		return metricutil.MetricData{}, err
+	}
+	if !expireAt.IsZero() && metricData.Time.Before(expireAt) {
+		general.Errorf(errMsgGetNumaMetrics, metricName, numaID, errMetricExpired)
+		return metricutil.MetricData{}, errMetricExpired
 	}
 	_ = emitter.StoreFloat64(metricsNameNumaMetric, metricData.Value, metrics.MetricTypeNameRaw,
 		metrics.ConvertMapToTags(map[string]string{
@@ -92,8 +100,8 @@ func GetNumaMetricWithTime(metricsFetcher metric.MetricsFetcher, emitter metrics
 	return metricData, nil
 }
 
-func GetNumaMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, numaID int) (float64, error) {
-	metricWithTime, err := GetNumaMetricWithTime(metricsFetcher, emitter, metricName, numaID)
+func GetNumaMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, metricName string, numaID int, expireAt time.Time) (float64, error) {
+	metricWithTime, err := GetNumaMetricWithTime(metricsFetcher, emitter, metricName, numaID, expireAt)
 	if err != nil {
 		return 0, err
 	}

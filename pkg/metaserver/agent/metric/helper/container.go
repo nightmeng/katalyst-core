@@ -18,18 +18,23 @@ package helper
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/general"
 )
 
-func GetContainerMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, podUID, containerName, metricName string, numaID int) (float64, error) {
+func GetContainerMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, podUID, containerName, metricName string, numaID int, expireAt time.Time) (float64, error) {
 	if numaID >= 0 {
 		data, err := metricsFetcher.GetContainerNumaMetric(podUID, containerName, strconv.Itoa(numaID), metricName)
 		if err != nil {
 			general.Errorf(errMsgGetContainerNumaMetrics, metricName, podUID, containerName, numaID, err)
 			return 0, err
+		}
+		if !expireAt.IsZero() && data.Time.Before(expireAt) {
+			general.Errorf(errMsgGetContainerNumaMetrics, metricName, podUID, containerName, numaID, errMetricExpired)
+			return 0, errMetricExpired
 		}
 		containerMetricValue := data.Value
 		_ = emitter.StoreFloat64(metricsNameContainerMetric, containerMetricValue, metrics.MetricTypeNameRaw,
@@ -45,6 +50,10 @@ func GetContainerMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.Me
 	if err != nil {
 		general.Errorf(errMsgGetContainerSystemMetrics, metricName, podUID, containerName, err)
 		return 0, err
+	}
+	if !expireAt.IsZero() && data.Time.Before(expireAt) {
+		general.Errorf(errMsgGetContainerSystemMetrics, metricName, podUID, containerName, errMetricExpired)
+		return 0, errMetricExpired
 	}
 	containerMetricValue := data.Value
 	_ = emitter.StoreFloat64(metricsNameContainerMetric, containerMetricValue, metrics.MetricTypeNameRaw,

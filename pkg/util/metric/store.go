@@ -128,7 +128,7 @@ func (c *MetricStore) SetContainerNumaMetric(podUID, containerName, numaNode, me
 	c.podContainerNumaMetricMap[podUID][containerName][numaNode][metricName] = data
 }
 
-func (c *MetricStore) SetVolumeMetric(podUID, volumeName, metricName string, data MetricData) {
+func (c *MetricStore) SetPodVolumeMetric(podUID, volumeName, metricName string, data MetricData) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -224,7 +224,7 @@ func (c *MetricStore) GetContainerNumaMetric(podUID, containerName, numaNode, me
 	return MetricData{}, errors.New("[MetricStore] empty map")
 }
 
-func (c *MetricStore) GetVolumeMetric(podUID, volumeName, metricName string) (MetricData, error) {
+func (c *MetricStore) GetPodVolumeMetric(podUID, volumeName, metricName string) (MetricData, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 

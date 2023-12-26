@@ -19,6 +19,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"math"
 	"strconv"
 	"sync"
@@ -163,7 +164,7 @@ func (s *SystemPressureEvictionPlugin) detectSystemPressures(_ context.Context) 
 }
 
 func (s *SystemPressureEvictionPlugin) detectSystemWatermarkPressure() {
-	free, total, scaleFactor, err := helper.GetWatermarkMetrics(s.metaServer.MetricsFetcher, s.emitter, nonExistNumaID)
+	free, total, scaleFactor, err := helper.GetWatermarkMetrics(s.metaServer.MetricsFetcher, s.emitter, nonExistNumaID, utils.GetMetricExpireTimestamp(s.dynamicConfig))
 	if err != nil {
 		_ = s.emitter.StoreInt64(metricsNameFetchMetricError, 1, metrics.MetricTypeNameCount,
 			metrics.ConvertMapToTags(map[string]string{
@@ -187,7 +188,7 @@ func (s *SystemPressureEvictionPlugin) detectSystemWatermarkPressure() {
 }
 
 func (s *SystemPressureEvictionPlugin) detectSystemKswapdStealPressure() {
-	kswapdSteal, err := helper.GetNodeMetricWithTime(s.metaServer.MetricsFetcher, s.emitter, consts.MetricMemKswapdstealSystem)
+	kswapdSteal, err := helper.GetNodeMetricWithTime(s.metaServer.MetricsFetcher, s.emitter, consts.MetricMemKswapdstealSystem, utils.GetMetricExpireTimestamp(s.dynamicConfig))
 	if err != nil {
 		s.kswapdStealPreviousCycle = kswapdStealPreviousCycleMissing
 		s.kswapdStealPreviousCycleTime = time.Now()

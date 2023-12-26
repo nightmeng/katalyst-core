@@ -70,6 +70,16 @@ const (
 	MetricIOBusyRateSystem = "io.busy.rate.system"
 )
 
+// System rootfs metrics
+const (
+	MetricsSystemRootfsAvailable  = "available.rootfs.system"
+	MetricsSystemRootfsCapacity   = "capacity.rootfs.system"
+	MetricsSystemRootfsUsed       = "used.rootfs.system"
+	MetricsSystemRootfsInodes     = "inodes.rootfs.system"
+	MetricsSystemRootfsInodesFree = "free.inodes.rootfs.system"
+	MetricsSystemRootfsInodesUsed = "used.inodes.rootfs.system"
+)
+
 // System numa metrics
 const (
 	MetricMemTotalNuma     = "mem.total.numa"
@@ -206,11 +216,12 @@ const (
 
 // container rootfs metrics
 const (
-	MetricsRootfsAvailable  = "available.rootfs.container"
-	MetricsRootfsCapacity   = "capacity.rootfs.container"
-	MetricsRootfsInodes     = "inodes.rootfs.container"
-	MetricsRootfsInodesFree = "free.inodes.rootfs.container"
-	MetricsRootfsInodesUsed = "used.inodes.rootfs.container"
+	MetricsContainerRootfsAvailable  = "available.rootfs.container"
+	MetricsContainerRootfsCapacity   = "capacity.rootfs.container"
+	MetricsContainerRootfsUsed       = "used.rootfs.container"
+	MetricsContainerRootfsInodes     = "inodes.rootfs.container"
+	MetricsContainerRootfsInodesFree = "free.inodes.rootfs.container"
+	MetricsContainerRootfsInodesUsed = "used.inodes.rootfs.container"
 )
 
 // container logs metrics
@@ -295,6 +306,7 @@ const (
 const (
 	MetricsPodVolumeAvailable  = "available.volume.pod.container"
 	MetricsPodVolumeCapacity   = "capacity.volume.pod.container"
+	MetricsPodVolumeUsed       = "used.volume.pod.container"
 	MetricsPodVolumeInodes     = "inodes.volume.pod.container"
 	MetricsPodVolumeInodesFree = "free.inodes.volume.pod.container"
 	MetricsPodVolumeInodesUsed = "used.inodes.volume.pod.container"

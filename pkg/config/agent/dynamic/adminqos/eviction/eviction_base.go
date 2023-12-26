@@ -16,17 +16,22 @@ limitations under the License.
 
 package eviction
 
-import "github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
+import (
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
+	"time"
+)
 
 type EvictionConfiguration struct {
 	// Dryrun plugins is the list of plugins to dryrun
 	// '*' means "all dryrun by default"
 	// 'foo' means "dryrun 'foo'"
 	// first item for a particular name wins
-	DryRun []string
+	DryRun                []string
+	MetricInsurancePeriod *time.Duration
 
 	*CPUPressureEvictionConfiguration
 	*MemoryPressureEvictionConfiguration
+	*RootfsPressureEvictionConfiguration
 	*ReclaimedResourcesEvictionConfiguration
 	*SystemLoadEvictionPluginConfiguration
 }
@@ -41,9 +46,11 @@ func NewEvictionConfiguration() *EvictionConfiguration {
 }
 
 func (c *EvictionConfiguration) ApplyConfiguration(conf *crd.DynamicConfigCRD) {
-	if aqc := conf.AdminQoSConfiguration; aqc != nil && aqc.Spec.Config.EvictionConfig != nil &&
-		aqc.Spec.Config.EvictionConfig.DryRun != nil {
-		c.DryRun = aqc.Spec.Config.EvictionConfig.DryRun
+	if aqc := conf.AdminQoSConfiguration; aqc != nil && aqc.Spec.Config.EvictionConfig != nil {
+		if aqc.Spec.Config.EvictionConfig.DryRun != nil {
+			c.DryRun = aqc.Spec.Config.EvictionConfig.DryRun
+		}
+		c.MetricInsurancePeriod = aqc.Spec.Config.EvictionConfig.MetricInsurancePeriod
 	}
 
 	c.CPUPressureEvictionConfiguration.ApplyConfiguration(conf)

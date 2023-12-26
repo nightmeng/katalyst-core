@@ -17,6 +17,7 @@ limitations under the License.
 package memory
 
 import (
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"testing"
 	"time"
 
@@ -220,7 +221,7 @@ func TestEvictionHelper_getEvictionCmpFuncs(t *testing.T) {
 		fakeMetricsFetcher.SetContainerMetric(string(pod.UID), pod.Spec.Containers[0].Name, consts.MetricMemUsageContainer, utilmetric.MetricData{Value: podUsageSystem[i], Time: &now})
 	}
 	general.NewMultiSorter(helper.getEvictionCmpFuncs(conf.GetDynamicConfiguration().SystemEvictionRankingMetrics,
-		nonExistNumaID)...).Sort(native.NewPodSourceImpList(pods))
+		nonExistNumaID, utils.GetMetricExpireTimestamp(conf.DynamicAgentConfiguration))...).Sort(native.NewPodSourceImpList(pods))
 
 	wantPodNameList := []string{
 		"pod-2",

@@ -17,9 +17,11 @@ limitations under the License.
 package memory
 
 import (
-	"strconv"
-
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
 	v1 "k8s.io/api/core/v1"
+	"strconv"
+	"time"
 
 	"github.com/kubewharf/katalyst-core/pkg/config"
 	evictionconfig "github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/adminqos/eviction"
@@ -74,6 +76,7 @@ const (
 type EvictionHelper struct {
 	metaServer         *metaserver.MetaServer
 	emitter            metrics.MetricEmitter
+	dynamicConfig      *dynamic.DynamicAgentConfiguration
 	reclaimedPodFilter func(pod *v1.Pod) (bool, error)
 }
 
@@ -81,6 +84,7 @@ func NewEvictionHelper(emitter metrics.MetricEmitter, metaServer *metaserver.Met
 	return &EvictionHelper{
 		metaServer:         metaServer,
 		emitter:            emitter,
+		dynamicConfig:      conf.DynamicAgentConfiguration,
 		reclaimedPodFilter: conf.CheckReclaimedQoSForPod,
 	}
 }
@@ -89,7 +93,7 @@ func (e *EvictionHelper) selectTopNPodsToEvictByMetrics(activePods []*v1.Pod, to
 	action int, rankingMetrics []string, podToEvictMap map[string]*v1.Pod) {
 	filteredPods := e.filterPods(activePods, action)
 	if filteredPods != nil {
-		general.NewMultiSorter(e.getEvictionCmpFuncs(rankingMetrics, numaID)...).Sort(native.NewPodSourceImpList(filteredPods))
+		general.NewMultiSorter(e.getEvictionCmpFuncs(rankingMetrics, numaID, utils.GetMetricExpireTimestamp(e.dynamicConfig))...).Sort(native.NewPodSourceImpList(filteredPods))
 		for i := 0; uint64(i) < general.MinUInt64(topN, uint64(len(filteredPods))); i++ {
 			podToEvictMap[string(filteredPods[i].UID)] = filteredPods[i]
 		}
@@ -108,7 +112,7 @@ func (e *EvictionHelper) filterPods(pods []*v1.Pod, action int) []*v1.Pod {
 }
 
 // getEvictionCmpFuncs returns a comparison function list to judge the eviction order of different pods
-func (e *EvictionHelper) getEvictionCmpFuncs(rankingMetrics []string, numaID int) []general.CmpFunc {
+func (e *EvictionHelper) getEvictionCmpFuncs(rankingMetrics []string, numaID int, expireAt time.Time) []general.CmpFunc {
 	cmpFuncs := make([]general.CmpFunc, 0, len(rankingMetrics))
 
 	for _, m := range rankingMetrics {
@@ -138,8 +142,10 @@ func (e *EvictionHelper) getEvictionCmpFuncs(rankingMetrics []string, numaID int
 				// prioritize evicting the pod whose priority is lower
 				return general.ReverseCmpFunc(native.PodPriorityCmpFunc)(p1, p2)
 			default:
-				p1Metric, p1Found := helper.GetPodMetric(e.metaServer.MetricsFetcher, e.emitter, p1, currentMetric, numaID)
-				p2Metric, p2Found := helper.GetPodMetric(e.metaServer.MetricsFetcher, e.emitter, p2, currentMetric, numaID)
+				p1Metric, p1Err := helper.GetPodMetric(e.metaServer.MetricsFetcher, e.emitter, p1, currentMetric, numaID, expireAt)
+				p2Metric, p2Err := helper.GetPodMetric(e.metaServer.MetricsFetcher, e.emitter, p2, currentMetric, numaID, expireAt)
+				p1Found := p1Err == nil
+				p2Found := p2Err == nil
 				if !p1Found || !p2Found {
 					_ = e.emitter.StoreInt64(metricsNameFetchMetricError, 1, metrics.MetricTypeNameCount,
 						metrics.ConvertMapToTags(map[string]string{

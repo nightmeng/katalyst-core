@@ -111,6 +111,10 @@ func (f *FakeMetricsFetcher) GetContainerNumaMetric(podUID, containerName, numaN
 	return f.metricStore.GetContainerNumaMetric(podUID, containerName, numaNode, metricName)
 }
 
+func (f *FakeMetricsFetcher) GetPodVolumeMetric(podUID, volumeName, metricName string) (metric.MetricData, error) {
+	return f.metricStore.GetPodVolumeMetric(podUID, volumeName, metricName)
+}
+
 func (f *FakeMetricsFetcher) SetNodeMetric(metricName string, data metric.MetricData) {
 	f.metricStore.SetNodeMetric(metricName, data)
 }

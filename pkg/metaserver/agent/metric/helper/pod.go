@@ -17,7 +17,9 @@ limitations under the License.
 package helper
 
 import (
+	"errors"
 	"strconv"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -27,16 +29,16 @@ import (
 
 // GetPodMetric returns the value of a pod-level metric.
 // And the value of a pod-level metric is calculated by summing the metric values for all containers in that pod.
-func GetPodMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, pod *v1.Pod, metricName string, numaID int) (float64, bool) {
+func GetPodMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEmitter, pod *v1.Pod, metricName string, numaID int, expireAt time.Time) (float64, error) {
 	if pod == nil {
-		return 0, false
+		return 0, errors.New("invalid pod")
 	}
 
 	var podMetricValue float64
 	for _, container := range pod.Spec.Containers {
-		containerMetricValue, err := GetContainerMetric(metricsFetcher, emitter, string(pod.UID), container.Name, metricName, numaID)
+		containerMetricValue, err := GetContainerMetric(metricsFetcher, emitter, string(pod.UID), container.Name, metricName, numaID, expireAt)
 		if err != nil {
-			return 0, false
+			return 0, err
 		}
 
 		podMetricValue += containerMetricValue
@@ -49,5 +51,5 @@ func GetPodMetric(metricsFetcher metric.MetricsFetcher, emitter metrics.MetricEm
 			metricsTagKeyMetricName: metricName,
 		})...)
 
-	return podMetricValue, true
+	return podMetricValue, nil
 }

@@ -19,6 +19,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"strconv"
 	"time"
 
@@ -125,7 +126,7 @@ func (n *NumaMemoryPressurePlugin) detectNumaPressures() {
 }
 
 func (n *NumaMemoryPressurePlugin) detectNumaWatermarkPressure(numaID int) error {
-	free, total, scaleFactor, err := helper.GetWatermarkMetrics(n.metaServer.MetricsFetcher, n.emitter, numaID)
+	free, total, scaleFactor, err := helper.GetWatermarkMetrics(n.metaServer.MetricsFetcher, n.emitter, numaID, utils.GetMetricExpireTimestamp(n.dynamicConfig))
 	if err != nil {
 		general.Errorf("failed to getWatermarkMetrics for numa %d, err: %v", numaID, err)
 		_ = n.emitter.StoreInt64(metricsNameFetchMetricError, 1, metrics.MetricTypeNameCount,
@@ -231,10 +232,10 @@ func (n *NumaMemoryPressurePlugin) getCandidates(pods []*v1.Pod, numaID int, min
 	for i := range pods {
 		pod := pods[i]
 		totalMem, totalMemErr := helper.GetNumaMetric(n.metaServer.MetricsFetcher, n.emitter,
-			consts.MetricMemTotalNuma, numaID)
-		usedMem, usedMemFound := helper.GetPodMetric(n.metaServer.MetricsFetcher, n.emitter, pod,
-			consts.MetricsMemTotalPerNumaContainer, numaID)
-		if totalMemErr != nil || !usedMemFound {
+			consts.MetricMemTotalNuma, numaID, utils.GetMetricExpireTimestamp(n.dynamicConfig))
+		usedMem, usedMemErr := helper.GetPodMetric(n.metaServer.MetricsFetcher, n.emitter, pod,
+			consts.MetricsMemTotalPerNumaContainer, numaID, utils.GetMetricExpireTimestamp(n.dynamicConfig))
+		if totalMemErr != nil || usedMemErr != nil {
 			result = append(result, pod)
 			continue
 		}

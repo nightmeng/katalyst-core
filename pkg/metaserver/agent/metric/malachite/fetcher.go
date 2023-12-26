@@ -146,6 +146,10 @@ func (m *MalachiteMetricsFetcher) GetContainerNumaMetric(podUID, containerName, 
 	return m.metricStore.GetContainerNumaMetric(podUID, containerName, numaNode, metricName)
 }
 
+func (m *MalachiteMetricsFetcher) GetPodVolumeMetric(podUID, volumeName, metricName string) (utilmetric.MetricData, error) {
+	return m.metricStore.GetPodVolumeMetric(podUID, volumeName, metricName)
+}
+
 func (m *MalachiteMetricsFetcher) GetCgroupMetric(cgroupPath, metricName string) (utilmetric.MetricData, error) {
 	return m.metricStore.GetCgroupMetric(cgroupPath, metricName)
 }

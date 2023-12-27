@@ -21,22 +21,27 @@ const (
 	metricsNamKubeletSummaryUnHealthy = "kubelet_summary_unhealthy"
 )
 
-func NewKubeletSummaryProvisioner(metricStore *utilmetric.MetricStore, emitter metrics.MetricEmitter, conf *config.Configuration) types.MetricsProvisioner {
+func NewKubeletSummaryProvisioner(metricStore *utilmetric.MetricStore, emitter metrics.MetricEmitter, conf *config.Configuration,
+	metricsNotifierManager types.MetricsNotifierManager, externalMetricManager types.ExternalMetricManager) types.MetricsProvisioner {
 	return &KubeletSummaryProvisioner{
-		metricStore: metricStore,
-		emitter:     emitter,
-		conf:        conf,
-		client:      client.NewClient(conf),
+		metricStore:            metricStore,
+		emitter:                emitter,
+		conf:                   conf,
+		client:                 client.NewClient(conf),
+		metricsNotifierManager: metricsNotifierManager,
+		externalMetricManager:  externalMetricManager,
 	}
 }
 
 type KubeletSummaryProvisioner struct {
-	metricStore *utilmetric.MetricStore
-	emitter     metrics.MetricEmitter
-	conf        *config.Configuration
-	client      *client.KubeletClient
-	startOnce   sync.Once
-	hasSynced   bool
+	metricStore            *utilmetric.MetricStore
+	emitter                metrics.MetricEmitter
+	conf                   *config.Configuration
+	client                 *client.KubeletClient
+	startOnce              sync.Once
+	hasSynced              bool
+	metricsNotifierManager types.MetricsNotifierManager
+	externalMetricManager  types.ExternalMetricManager
 }
 
 func (p *KubeletSummaryProvisioner) Run(ctx context.Context) {
@@ -71,6 +76,9 @@ func (p *KubeletSummaryProvisioner) sample(ctx context.Context) {
 
 		// /etc/hosts
 	}
+
+	p.externalMetricManager.Sample()
+	p.metricsNotifierManager.Notify()
 
 	if !p.hasSynced {
 		p.hasSynced = true

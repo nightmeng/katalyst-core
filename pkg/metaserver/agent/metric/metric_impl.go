@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/kubewharf/katalyst-core/pkg/config"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/kubelet"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/pod"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/machine"
 	utilmetric "github.com/kubewharf/katalyst-core/pkg/util/metric"
@@ -16,63 +16,6 @@ import (
 	"sync"
 	"time"
 )
-
-type MetricsReaderImpl struct {
-	metricStore *utilmetric.MetricStore
-}
-
-func NewMetricsReader(metricStore *utilmetric.MetricStore) types.MetricsReader {
-	return &MetricsReaderImpl{metricStore: metricStore}
-}
-
-func (m *MetricsReaderImpl) GetNodeMetric(metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetNodeMetric(metricName)
-}
-
-func (m *MetricsReaderImpl) GetNumaMetric(numaID int, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetNumaMetric(numaID, metricName)
-}
-
-func (m *MetricsReaderImpl) GetDeviceMetric(deviceName string, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetDeviceMetric(deviceName, metricName)
-}
-
-func (m *MetricsReaderImpl) GetCPUMetric(coreID int, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetCPUMetric(coreID, metricName)
-}
-
-func (m *MetricsReaderImpl) GetContainerMetric(podUID, containerName, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetContainerMetric(podUID, containerName, metricName)
-}
-
-func (m *MetricsReaderImpl) GetContainerNumaMetric(podUID, containerName, numaNode, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetContainerNumaMetric(podUID, containerName, numaNode, metricName)
-}
-
-func (m *MetricsReaderImpl) GetPodVolumeMetric(podUID, volumeName, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetPodVolumeMetric(podUID, volumeName, metricName)
-}
-
-func (m *MetricsReaderImpl) GetCgroupMetric(cgroupPath, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetCgroupMetric(cgroupPath, metricName)
-}
-
-func (m *MetricsReaderImpl) GetCgroupNumaMetric(cgroupPath, numaNode, metricName string) (utilmetric.MetricData, error) {
-	return m.metricStore.GetCgroupNumaMetric(cgroupPath, numaNode, metricName)
-}
-func (m *MetricsReaderImpl) AggregatePodNumaMetric(podList []*v1.Pod, numaNode, metricName string,
-	agg utilmetric.Aggregator, filter utilmetric.ContainerMetricFilter) utilmetric.MetricData {
-	return m.metricStore.AggregatePodNumaMetric(podList, numaNode, metricName, agg, filter)
-}
-
-func (m *MetricsReaderImpl) AggregatePodMetric(podList []*v1.Pod, metricName string,
-	agg utilmetric.Aggregator, filter utilmetric.ContainerMetricFilter) utilmetric.MetricData {
-	return m.metricStore.AggregatePodMetric(podList, metricName, agg, filter)
-}
-
-func (m *MetricsReaderImpl) AggregateCoreMetric(cpuset machine.CPUSet, metricName string, agg utilmetric.Aggregator) utilmetric.MetricData {
-	return m.metricStore.AggregateCoreMetric(cpuset, metricName, agg)
-}
 
 type MetricsNotifierManagerImpl struct {
 	sync.RWMutex
@@ -247,27 +190,87 @@ func (m *ExternalMetricManagerImpl) Sample() {
 }
 
 type MetricsFetcherImpl struct {
-	types.MetricsReader
-	types.MetricsNotifierManager
-	types.ExternalMetricManager
-	provisioners []types.MetricsProvisioner
+	metricStore            *utilmetric.MetricStore
+	metricsNotifierManager types.MetricsNotifierManager
+	externalMetricManager  types.ExternalMetricManager
+	provisioners           []types.MetricsProvisioner
 }
 
-func NewMetricsFetcher(emitter metrics.MetricEmitter, metaAgent *agent.MetaAgent, conf *config.Configuration) types.MetricsFetcher {
+func NewMetricsFetcher(emitter metrics.MetricEmitter, podFetcher pod.PodFetcher, conf *config.Configuration) types.MetricsFetcher {
 	metricStore := utilmetric.NewMetricStore()
-	reader := NewMetricsReader(metricStore)
 	metricsNotifierManager := NewMetricsNotifierManager(metricStore)
 	externalMetricManager := NewExternalMetricManager(metricStore)
-
-	malachiteProvisioner := malachite.NewMalachiteMetricsFetcher(metricStore, emitter, metaAgent, conf, metricsNotifierManager, externalMetricManager)
-	kubeletProvisioner := kubelet.NewKubeletSummaryProvisioner(metricStore, emitter, conf)
+	malachiteProvisioner := malachite.NewMalachiteMetricsFetcher(metricStore, emitter, podFetcher, conf, metricsNotifierManager, externalMetricManager)
+	kubeletProvisioner := kubelet.NewKubeletSummaryProvisioner(metricStore, emitter, conf, metricsNotifierManager, externalMetricManager)
 
 	return &MetricsFetcherImpl{
-		MetricsReader:          reader,
-		MetricsNotifierManager: metricsNotifierManager,
-		ExternalMetricManager:  externalMetricManager,
+		metricStore:            metricStore,
+		metricsNotifierManager: metricsNotifierManager,
+		externalMetricManager:  externalMetricManager,
 		provisioners:           []types.MetricsProvisioner{malachiteProvisioner, kubeletProvisioner},
 	}
+}
+
+func (f *MetricsFetcherImpl) GetNodeMetric(metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetNodeMetric(metricName)
+}
+
+func (f *MetricsFetcherImpl) GetNumaMetric(numaID int, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetNumaMetric(numaID, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetDeviceMetric(deviceName string, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetDeviceMetric(deviceName, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetCPUMetric(coreID int, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetCPUMetric(coreID, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetContainerMetric(podUID, containerName, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetContainerMetric(podUID, containerName, metricName)
+}
+
+func (m *MetricsFetcherImpl) GetContainerNumaMetric(podUID, containerName, numaNode, metricName string) (utilmetric.MetricData, error) {
+	return m.metricStore.GetContainerNumaMetric(podUID, containerName, numaNode, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetPodVolumeMetric(podUID, volumeName, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetPodVolumeMetric(podUID, volumeName, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetCgroupMetric(cgroupPath, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetCgroupMetric(cgroupPath, metricName)
+}
+
+func (f *MetricsFetcherImpl) GetCgroupNumaMetric(cgroupPath, numaNode, metricName string) (utilmetric.MetricData, error) {
+	return f.metricStore.GetCgroupNumaMetric(cgroupPath, numaNode, metricName)
+}
+
+func (f *MetricsFetcherImpl) AggregatePodNumaMetric(podList []*v1.Pod, numaNode, metricName string,
+	agg utilmetric.Aggregator, filter utilmetric.ContainerMetricFilter) utilmetric.MetricData {
+	return f.metricStore.AggregatePodNumaMetric(podList, numaNode, metricName, agg, filter)
+}
+
+func (f *MetricsFetcherImpl) AggregatePodMetric(podList []*v1.Pod, metricName string,
+	agg utilmetric.Aggregator, filter utilmetric.ContainerMetricFilter) utilmetric.MetricData {
+	return f.metricStore.AggregatePodMetric(podList, metricName, agg, filter)
+}
+
+func (f *MetricsFetcherImpl) AggregateCoreMetric(cpuset machine.CPUSet, metricName string, agg utilmetric.Aggregator) utilmetric.MetricData {
+	return f.metricStore.AggregateCoreMetric(cpuset, metricName, agg)
+}
+
+func (f *MetricsFetcherImpl) RegisterNotifier(scope types.MetricsScope, req types.NotifiedRequest, response chan types.NotifiedResponse) string {
+	return f.metricsNotifierManager.RegisterNotifier(scope, req, response)
+}
+
+func (f *MetricsFetcherImpl) DeRegisterNotifier(scope types.MetricsScope, key string) {
+	f.metricsNotifierManager.DeRegisterNotifier(scope, key)
+}
+
+func (f *MetricsFetcherImpl) RegisterExternalMetric(externalMetricFunc func(store *utilmetric.MetricStore)) {
+	f.externalMetricManager.RegisterExternalMetric(externalMetricFunc)
 }
 
 func (f *MetricsFetcherImpl) Run(ctx context.Context) {

@@ -19,6 +19,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"strconv"
 	"sync"
 	"time"
@@ -236,7 +237,7 @@ func (ra *memoryResourceAdvisor) detectNUMAPressureConditions() (map[int]*types.
 }
 
 func (ra *memoryResourceAdvisor) detectNUMAPressure(numaID int) (*types.MemoryPressureCondition, error) {
-	free, total, scaleFactor, err := helper.GetWatermarkMetrics(ra.metaServer.MetricsFetcher, ra.emitter, numaID)
+	free, total, scaleFactor, err := helper.GetWatermarkMetrics(ra.metaServer.MetricsFetcher, ra.emitter, numaID, utils.GetMetricExpireTimestamp(ra.conf.DynamicAgentConfiguration))
 	if err != nil {
 		general.Errorf("failed to getWatermarkMetrics for numa %d, err: %v", numaID, err)
 		return nil, err
@@ -272,7 +273,7 @@ func (ra *memoryResourceAdvisor) detectNUMAPressure(numaID int) (*types.MemoryPr
 }
 
 func (ra *memoryResourceAdvisor) detectNodePressureCondition() (*types.MemoryPressureCondition, error) {
-	free, total, scaleFactor, err := helper.GetWatermarkMetrics(ra.metaServer.MetricsFetcher, ra.emitter, nonExistNumaID)
+	free, total, scaleFactor, err := helper.GetWatermarkMetrics(ra.metaServer.MetricsFetcher, ra.emitter, nonExistNumaID, utils.GetMetricExpireTimestamp(ra.conf.DynamicAgentConfiguration))
 	if err != nil {
 		general.Errorf("failed to getWatermarkMetrics for system, err: %v", err)
 		return nil, err

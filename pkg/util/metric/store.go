@@ -225,8 +225,8 @@ func (c *MetricStore) GetContainerNumaMetric(podUID, containerName, numaNode, me
 }
 
 func (c *MetricStore) GetPodVolumeMetric(podUID, volumeName, metricName string) (MetricData, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	if c.podVolumeMetricMap[podUID] != nil {
 		if c.podVolumeMetricMap[podUID][volumeName] != nil {

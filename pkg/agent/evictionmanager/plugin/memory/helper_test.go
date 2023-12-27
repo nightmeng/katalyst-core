@@ -17,7 +17,6 @@ limitations under the License.
 package memory
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"testing"
 	"time"
 
@@ -26,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apiconsts "github.com/kubewharf/katalyst-api/pkg/consts"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"github.com/kubewharf/katalyst-core/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"

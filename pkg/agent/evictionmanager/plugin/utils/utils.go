@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
 	"time"
+	
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
 )
 
 func GetMetricExpireTimestamp(dynamicConfig *dynamic.DynamicAgentConfiguration) time.Time {

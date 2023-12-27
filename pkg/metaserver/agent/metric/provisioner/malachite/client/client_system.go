@@ -19,9 +19,10 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 )
 
 func (c *MalachiteClient) GetSystemComputeStats() (*types.SystemComputeData, error) {

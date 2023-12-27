@@ -19,7 +19,6 @@ package memory
 import (
 	"context"
 	"fmt"
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"strconv"
 	"time"
 
@@ -31,6 +30,7 @@ import (
 	apiconsts "github.com/kubewharf/katalyst-api/pkg/consts"
 	pluginapi "github.com/kubewharf/katalyst-api/pkg/protocol/evictionplugin/v1alpha1"
 	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"github.com/kubewharf/katalyst-core/pkg/client"
 	"github.com/kubewharf/katalyst-core/pkg/config"
 	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"

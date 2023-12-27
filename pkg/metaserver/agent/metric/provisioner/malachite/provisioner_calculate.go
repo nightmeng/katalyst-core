@@ -19,10 +19,10 @@ package malachite
 // for those metrics need extra calculation logic,
 // we will put them in a separate file here
 import (
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"time"
 
 	"github.com/kubewharf/katalyst-core/pkg/consts"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite/types"
 	"github.com/kubewharf/katalyst-core/pkg/util/metric"
 )
 

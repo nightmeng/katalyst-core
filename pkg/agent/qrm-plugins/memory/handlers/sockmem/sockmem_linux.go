@@ -21,10 +21,10 @@ package sockmem
 
 import (
 	"context"
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 
 	"golang.org/x/sys/unix"
 
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	coreconfig "github.com/kubewharf/katalyst-core/pkg/config"
 	dynamicconfig "github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
 	coreconsts "github.com/kubewharf/katalyst-core/pkg/consts"

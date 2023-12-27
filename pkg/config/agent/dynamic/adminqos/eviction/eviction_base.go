@@ -17,8 +17,9 @@ limitations under the License.
 package eviction
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
 	"time"
+
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
 )
 
 type EvictionConfiguration struct {

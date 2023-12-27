@@ -86,6 +86,7 @@ type MetricsReader interface {
 	GetCgroupMetric(cgroupPath, metricName string) (metric.MetricData, error)
 	// GetCgroupNumaMetric get NUMA metric of qos class: /kubepods/burstable, /kubepods/besteffort, etc.
 	GetCgroupNumaMetric(cgroupPath, numaNode, metricName string) (metric.MetricData, error)
+
 	HasSynced() bool
 }
 
@@ -115,8 +116,6 @@ type ExternalMetricManager interface {
 
 // MetricsFetcher is used to get Node and Pod metrics.
 type MetricsFetcher interface {
-	MetricsReader
-
 	// Run starts the preparing logic to collect node metadata.
 	Run(ctx context.Context)
 
@@ -132,4 +131,6 @@ type MetricsFetcher interface {
 	// RegisterExternalMetric register a function to set metric that can
 	// only be obtained from external sources
 	RegisterExternalMetric(f func(store *metric.MetricStore))
+
+	MetricsReader
 }

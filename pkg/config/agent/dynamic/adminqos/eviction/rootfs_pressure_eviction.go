@@ -2,11 +2,14 @@ package eviction
 
 import (
 	"fmt"
-	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
-	"k8s.io/apimachinery/pkg/api/resource"
-	evictionapi "k8s.io/kubernetes/pkg/kubelet/eviction/api"
+	"github.com/kubewharf/katalyst-core/pkg/util/general"
 	"strconv"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/resource"
+	evictionapi "k8s.io/kubernetes/pkg/kubelet/eviction/api"
+
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/crd"
 )
 
 type RootfsPressureEvictionConfiguration struct {
@@ -33,24 +36,32 @@ func (c *RootfsPressureEvictionConfiguration) ApplyTo(conf *crd.DynamicConfigCRD
 			thresholdValue, err := parseThresholdValue(config.MinimumFreeThreshold)
 			if err == nil {
 				c.MinimumFreeThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse minimumFreeThreshold, ignore this configuration: %q", err)
 			}
 		}
 		if config.MinimumInodesFreeThreshold != "" {
 			thresholdValue, err := parseThresholdValue(config.MinimumInodesFreeThreshold)
 			if err == nil {
 				c.MinimumInodesFreeThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse minimumInodesFreeThreshold, ignore this configuration: %q", err)
 			}
 		}
 		if config.PodMinimumUsedThreshold != "" {
 			thresholdValue, err := parseThresholdValue(config.PodMinimumUsedThreshold)
 			if err == nil {
 				c.PodMinimumUsedThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse podMinimumUsedThreshold, ignore this configuration: %q", err)
 			}
 		}
 		if config.ReclaimedQoSPodUsedPriorityThreshold != "" {
 			thresholdValue, err := parseThresholdValue(config.ReclaimedQoSPodUsedPriorityThreshold)
 			if err == nil {
 				c.ReclaimedQoSPodUsedPriorityThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse reclaimedQoSPodUsedPriorityThreshold, ignore this configuration: %q", err)
 			}
 		}
 		if config.GracePeriod != nil {

@@ -18,7 +18,6 @@ package qosaware
 
 import (
 	"context"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -36,6 +35,7 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/metaserver"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	metricspool "github.com/kubewharf/katalyst-core/pkg/metrics/metrics-pool"
 	"github.com/kubewharf/katalyst-core/pkg/util/machine"

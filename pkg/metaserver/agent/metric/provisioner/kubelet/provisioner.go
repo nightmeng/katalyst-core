@@ -2,18 +2,18 @@ package kubelet
 
 import (
 	"context"
-	"github.com/kubewharf/katalyst-core/pkg/consts"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
-	"github.com/kubewharf/katalyst-core/pkg/metrics"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	statsapi "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 
 	"github.com/kubewharf/katalyst-core/pkg/config"
+	"github.com/kubewharf/katalyst-core/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/kubelet/client"
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
+	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	utilmetric "github.com/kubewharf/katalyst-core/pkg/util/metric"
 )
 
@@ -27,7 +27,7 @@ func NewKubeletSummaryProvisioner(metricStore *utilmetric.MetricStore, emitter m
 		metricStore:            metricStore,
 		emitter:                emitter,
 		conf:                   conf,
-		client:                 client.NewClient(conf),
+		client:                 client.NewKubeletSummaryClient(conf),
 		metricsNotifierManager: metricsNotifierManager,
 		externalMetricManager:  externalMetricManager,
 	}
@@ -37,7 +37,7 @@ type KubeletSummaryProvisioner struct {
 	metricStore            *utilmetric.MetricStore
 	emitter                metrics.MetricEmitter
 	conf                   *config.Configuration
-	client                 *client.KubeletClient
+	client                 *client.KubeletSummaryClient
 	startOnce              sync.Once
 	hasSynced              bool
 	metricsNotifierManager types.MetricsNotifierManager

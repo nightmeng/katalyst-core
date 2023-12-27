@@ -21,7 +21,6 @@ package evictionmanager // import "github.com/kubewharf/katalyst-core/pkg/evicti
 import (
 	"context"
 	"fmt"
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/disk"
 	"strconv"
 	"sync"
 	"time"
@@ -120,7 +119,7 @@ func NewInnerEvictionPluginInitializers() map[string]plugin.InitFunc {
 	innerEvictionPluginInitializers[memory.EvictionPluginNameNumaMemoryPressure] = memory.NewNumaMemoryPressureEvictionPlugin
 	innerEvictionPluginInitializers[memory.EvictionPluginNameSystemMemoryPressure] = memory.NewSystemPressureEvictionPlugin
 	innerEvictionPluginInitializers[memory.EvictionPluginNameRssOveruse] = memory.NewRssOveruseEvictionPlugin
-	innerEvictionPluginInitializers[disk.EvictionPluginNamePodRootfsPressure] = disk.NewPodRootfsPressureEvictionPlugin
+	innerEvictionPluginInitializers[rootfs.EvictionPluginNamePodRootfsPressure] = rootfs.NewPodRootfsPressureEvictionPlugin
 	return innerEvictionPluginInitializers
 }
 

@@ -3,24 +3,26 @@ package client
 import (
 	"context"
 	"fmt"
+
+	statsapi "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
+
 	"github.com/kubewharf/katalyst-core/pkg/config"
 	"github.com/kubewharf/katalyst-core/pkg/util/native"
 	"github.com/kubewharf/katalyst-core/pkg/util/process"
-	statsapi "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-type KubeletClient struct {
+type KubeletSummaryClient struct {
 	conf *config.Configuration
 }
 
 // http://127.0.0.1:10255
-func NewClient(conf *config.Configuration) *KubeletClient {
-	return &KubeletClient{
+func NewKubeletSummaryClient(conf *config.Configuration) *KubeletSummaryClient {
+	return &KubeletSummaryClient{
 		conf: conf,
 	}
 }
 
-func (c *KubeletClient) Summary(ctx context.Context) (*statsapi.Summary, error) {
+func (c *KubeletSummaryClient) Summary(ctx context.Context) (*statsapi.Summary, error) {
 	summary := &statsapi.Summary{}
 	if c.conf.EnableKubeletSecurePort {
 		if err := native.GetAndUnmarshalForHttps(ctx, c.conf.KubeletSecurePort, c.conf.NodeAddress, c.conf.KubeletPodsEndpoint, c.conf.APIAuthTokenFile, summary); err != nil {

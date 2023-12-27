@@ -1,9 +1,16 @@
-package disk
+package rootfs
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/events"
+	volumeutils "k8s.io/kubernetes/pkg/volume/util"
+
 	pluginapi "github.com/kubewharf/katalyst-api/pkg/protocol/evictionplugin/v1alpha1"
 	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin"
 	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
@@ -17,11 +24,6 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/general"
 	"github.com/kubewharf/katalyst-core/pkg/util/process"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/events"
-	volumeutils "k8s.io/kubernetes/pkg/volume/util"
-	"sort"
-	"time"
 )
 
 const (

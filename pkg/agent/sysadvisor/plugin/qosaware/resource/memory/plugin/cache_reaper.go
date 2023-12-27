@@ -17,7 +17,6 @@ limitations under the License.
 package plugin
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"strconv"
 	"sync"
 
@@ -25,6 +24,7 @@ import (
 	"k8s.io/kubelet/pkg/apis/resourceplugin/v1alpha1"
 
 	apiconsts "github.com/kubewharf/katalyst-api/pkg/consts"
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/cpu/dynamicpolicy/cpuadvisor"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/memory/dynamicpolicy/memoryadvisor"
 	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/metacache"

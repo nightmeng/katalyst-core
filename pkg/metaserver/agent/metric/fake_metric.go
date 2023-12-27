@@ -32,11 +32,11 @@ package metric
 
 import (
 	"context"
-	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/types"
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/machine"
 	"github.com/kubewharf/katalyst-core/pkg/util/metric"

@@ -17,13 +17,14 @@ limitations under the License.
 package memory
 
 import (
-	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
-	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
-	v1 "k8s.io/api/core/v1"
 	"strconv"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+
+	"github.com/kubewharf/katalyst-core/pkg/agent/evictionmanager/plugin/utils"
 	"github.com/kubewharf/katalyst-core/pkg/config"
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic"
 	evictionconfig "github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/adminqos/eviction"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/helper"

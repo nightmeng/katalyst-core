@@ -3,6 +3,12 @@ package metric
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/kubewharf/katalyst-core/pkg/config"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/kubelet"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric/provisioner/malachite"
@@ -11,10 +17,6 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/machine"
 	utilmetric "github.com/kubewharf/katalyst-core/pkg/util/metric"
-	v1 "k8s.io/api/core/v1"
-	"math/rand"
-	"sync"
-	"time"
 )
 
 type MetricsNotifierManagerImpl struct {

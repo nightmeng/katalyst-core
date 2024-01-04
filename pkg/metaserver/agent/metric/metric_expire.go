@@ -18,6 +18,7 @@ package metric
 
 import (
 	"errors"
+	"github.com/kubewharf/katalyst-core/pkg/util/general"
 	"time"
 
 	utilmetric "github.com/kubewharf/katalyst-core/pkg/util/metric"
@@ -59,6 +60,7 @@ func checkMetricDataExpireFunc(metricsInsurancePeriod time.Duration) CheckMetric
 
 		expireAt := time.Now().Add(-metricsInsurancePeriod)
 		if metricData.Time.Before(expireAt) {
+			general.Warningf("MetricTime: %s, Expire: %s", metricData.Time, expireAt)
 			return metricData, errMetricDataExpired
 		}
 

@@ -282,17 +282,16 @@ func (l podUsageList) Len() int {
 }
 
 func (r *PodRootfsPressureEvictionPlugin) checkPodMinimumUsage(usage int64, percentage float64, minUsedThreshold *evictionapi.ThresholdValue) bool {
-	if minUsedThreshold != nil {
-		if minUsedThreshold.Quantity != nil && usage < minUsedThreshold.Quantity.Value() {
-			return true
-		} else {
-			if percentage < float64(minUsedThreshold.Percentage) {
-				return true
-			}
-		}
+	if minUsedThreshold == nil {
+		return false
 	}
-
-	return false
+	if minUsedThreshold.Quantity != nil && usage > minUsedThreshold.Quantity.Value() {
+		return true
+	} else if percentage > float64(minUsedThreshold.Percentage) {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (r *PodRootfsPressureEvictionPlugin) checkReclaimedPodPriority(pod *v1.Pod, used int64, percentage float64, reclaimedPodPriorityUsedThreshold *evictionapi.ThresholdValue) bool {

@@ -327,11 +327,13 @@ func (r *PodRootfsPressureEvictionPlugin) reclaimedPodPriorityEvictionMet(pod *v
 	if reclaimedPodPriorityUsedThreshold.Quantity != nil {
 		if used > reclaimedPodPriorityUsedThreshold.Quantity.Value() {
 			general.Infof("ReclaimedPriority(used: %d, threshold: %d)", used, reclaimedPodPriorityUsedThreshold.Quantity.Value())
+			return true
 		}
 		return false
 	} else {
 		if percentage > float64(reclaimedPodPriorityUsedThreshold.Percentage) {
 			general.Infof("ReclaimedPriority(percentage: %.2f, threshold: %.2f", float64(reclaimedPodPriorityUsedThreshold.Percentage))
+			return true
 		}
 		return false
 	}

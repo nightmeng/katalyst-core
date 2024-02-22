@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
 	"github.com/kubewharf/katalyst-api/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/advisorsvc"
@@ -260,14 +261,9 @@ func (cs *cpuServer) updateContainerInfo(podUID string, containerName string, po
 		ci.QoSLevel = qosLevel
 	}
 
-	// get origin owner pool name according to the qos conf
-	originOwnerPoolName, err := cs.qosConf.GetSpecifiedPoolNameForPod(pod)
-	if err != nil {
-		return fmt.Errorf("container %v/%v get origin owner pool name failed", podUID, containerName)
-	}
-	if ci.OriginOwnerPoolName != originOwnerPoolName {
-		general.Infof("OriginOwnerPoolName has change from %s to %s", ci.OriginOwnerPoolName, originOwnerPoolName)
-		ci.OriginOwnerPoolName = originOwnerPoolName
+	if ci.OriginOwnerPoolName == "" {
+		general.Infof("%s OriginOwnerPoolName %s, OwnerPoolName: %s", format.Pod(pod), ci.OriginOwnerPoolName, ci.OwnerPoolName)
+		ci.OriginOwnerPoolName = info.OwnerPoolName
 	}
 
 	// fill in topology aware assignment for containers with owner pool
@@ -323,7 +319,7 @@ func (cs *cpuServer) assemblePodEntries(calculationEntriesMap map[string]*cpuadv
 	}
 
 	// currently, only pods in "dedicated_nums with numa binding" has topology aware allocations
-	if ci.IsNumaBinding() {
+	if ci.IsDedicatedNumaBinding() {
 		calculationResultsByNumas := make(map[int64]*cpuadvisor.NumaCalculationResult)
 
 		for numaID, cpuset := range ci.TopologyAwareAssignments {

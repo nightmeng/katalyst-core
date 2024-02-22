@@ -82,6 +82,7 @@ func (pa *ProvisionAssemblerCommon) AssembleProvision() (types.InternalCPUCalcul
 	sharePoolSizes := make(map[string]int)
 	isolationUpperSizes := make(map[string]int)
 	isolationLowerSizes := make(map[string]int)
+	isolationNumaID := make(map[string]int)
 
 	for _, r := range *pa.regionMap {
 		controlKnob, err := r.GetProvision()
@@ -91,17 +92,38 @@ func (pa *ProvisionAssemblerCommon) AssembleProvision() (types.InternalCPUCalcul
 
 		switch r.Type() {
 		case types.QoSRegionTypeShare:
-			// save raw share pool sizes
-			sharePoolSizes[r.OwnerPoolName()] = int(controlKnob[types.ControlKnobNonReclaimedCPUSize].Value)
+			if r.IsNumaBinding() {
+				regionNuma := r.GetBindingNumas().ToSliceInt()[0] // always one binding numa for this type of region
+				reservedForReclaim := pa.getNumasReservedForReclaim(r.GetBindingNumas())
 
-			shares += sharePoolSizes[r.OwnerPoolName()]
-
+				nonReclaimRequirement := int(controlKnob[types.ControlKnobNonReclaimedCPUSize].Value)
+				calculationResult.SetPoolEntry(r.OwnerPoolName(), regionNuma, nonReclaimRequirement)
+				if nodeEnableReclaim {
+					available := getNumasAvailableResource(*pa.numaAvailable, r.GetBindingNumas())
+					reclaimed := available - nonReclaimRequirement + reservedForReclaim
+					calculationResult.SetPoolEntry(state.PoolNameReclaim, regionNuma, reclaimed)
+				} else {
+					if reservedForReclaim > 0 {
+						calculationResult.SetPoolEntry(state.PoolNameReclaim, regionNuma, reservedForReclaim)
+					}
+				}
+			} else {
+				// save raw share pool sizes
+				sharePoolSizes[r.OwnerPoolName()] = int(controlKnob[types.ControlKnobNonReclaimedCPUSize].Value)
+				shares += sharePoolSizes[r.OwnerPoolName()]
+			}
 		case types.QoSRegionTypeIsolation:
 			// save limits and requests for isolated region
 			isolationUpperSizes[r.Name()] = int(controlKnob[types.ControlKnobNonReclaimedCPUSizeUpper].Value)
 			isolationLowerSizes[r.Name()] = int(controlKnob[types.ControlKnobNonReclaimedCPUSizeLower].Value)
 
 			isolationUppers += isolationUpperSizes[r.Name()]
+
+			if r.IsNumaBinding() {
+				isolationNumaID[r.Name()] = r.GetBindingNumas().ToSliceInt()[0]
+			} else {
+				isolationNumaID[r.Name()] = cpuadvisor.FakedNUMAID
+			}
 
 		case types.QoSRegionTypeDedicatedNumaExclusive:
 			regionNuma := r.GetBindingNumas().ToSliceInt()[0] // always one binding numa for this type of region
@@ -140,7 +162,7 @@ func (pa *ProvisionAssemblerCommon) AssembleProvision() (types.InternalCPUCalcul
 	}
 	poolThrottled := regulatePoolSizes(shareAndIsolatePoolSizes, shareAndIsolatedPoolAvailable, nodeEnableReclaim)
 	for _, r := range *pa.regionMap {
-		if r.Type() == types.QoSRegionTypeShare {
+		if r.Type() == types.QoSRegionTypeShare && !r.IsNumaBinding() {
 			r.SetThrottled(poolThrottled)
 		}
 	}
@@ -152,7 +174,11 @@ func (pa *ProvisionAssemblerCommon) AssembleProvision() (types.InternalCPUCalcul
 
 	// fill in regulated share-and-isolated pool entries
 	for poolName, poolSize := range shareAndIsolatePoolSizes {
-		calculationResult.SetPoolEntry(poolName, cpuadvisor.FakedNUMAID, poolSize)
+		numaID := cpuadvisor.FakedNUMAID
+		if realNumaID, ok := isolationNumaID[poolName]; ok {
+			numaID = realNumaID
+		}
+		calculationResult.SetPoolEntry(poolName, numaID, poolSize)
 	}
 
 	var reclaimPoolSizeOfNonBindingNumas int

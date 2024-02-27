@@ -102,6 +102,10 @@ func (p *KubeletSummaryProvisioner) sample(ctx context.Context) {
 }
 
 func (p *KubeletSummaryProvisioner) processNodeRootfsStats(nodeRootfsStats *statsapi.FsStats) {
+	if nodeRootfsStats == nil {
+		klog.Warningf("nil node rootfs stats")
+		return
+	}
 	updateTime := nodeRootfsStats.Time.Time
 	if nodeRootfsStats.AvailableBytes != nil {
 		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: float64(*nodeRootfsStats.AvailableBytes), Time: &updateTime})
@@ -124,6 +128,10 @@ func (p *KubeletSummaryProvisioner) processNodeRootfsStats(nodeRootfsStats *stat
 }
 
 func (p *KubeletSummaryProvisioner) processVolumeStats(podUID string, volumeStats *statsapi.VolumeStats) {
+	if volumeStats == nil {
+		klog.Warningf("nil volume (%s) stats", podUID)
+		return
+	}
 	updateTime := volumeStats.Time.Time
 	if volumeStats.AvailableBytes != nil {
 		p.metricStore.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeAvailable, utilmetric.MetricData{Value: float64(*volumeStats.AvailableBytes), Time: &updateTime})
@@ -146,7 +154,12 @@ func (p *KubeletSummaryProvisioner) processVolumeStats(podUID string, volumeStat
 }
 
 func (p *KubeletSummaryProvisioner) processContainerRootfsStats(podUID string, containerStats *statsapi.ContainerStats) {
+	if containerStats == nil {
+		klog.Warningf("nil container stats (%s)", podUID)
+		return
+	}
 	if containerStats.Rootfs == nil {
+		klog.Warningf("nil container rootfs stats (%s)", podUID)
 		return
 	}
 	updateTime := containerStats.Rootfs.Time.Time
@@ -171,7 +184,11 @@ func (p *KubeletSummaryProvisioner) processContainerRootfsStats(podUID string, c
 }
 
 func (p *KubeletSummaryProvisioner) processContainerLogsStats(podUID string, containerStats *statsapi.ContainerStats) {
+	if containerStats == nil {
+		klog.Warningf("nil container stats (%s)", podUID)
+	}
 	if containerStats.Logs == nil {
+		klog.Warningf("nil container logs stats (%s)", podUID)
 		return
 	}
 	updateTime := containerStats.Logs.Time.Time

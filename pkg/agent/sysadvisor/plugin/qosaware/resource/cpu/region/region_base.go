@@ -681,7 +681,7 @@ func (r *QoSRegionBase) getIndicators() (types.Indicator, error) {
 			Target:  minTarget,
 		}
 
-		if indicatorValue.Target <= 0 || indicatorValue.Current <= 0 {
+		if indicatorValue.Target <= 0 || indicatorValue.Current < 0 {
 			return nil, fmt.Errorf("%v with invalid indicator value %v", indicatorName, indicatorValue)
 		}
 

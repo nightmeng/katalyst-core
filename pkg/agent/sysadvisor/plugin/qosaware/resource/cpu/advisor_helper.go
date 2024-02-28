@@ -109,6 +109,7 @@ func (cra *cpuResourceAdvisor) getPoolRegions(poolName string) []region.QoSRegio
 func (cra *cpuResourceAdvisor) setPoolRegions(poolName string, regions []region.QoSRegion) error {
 	pool, ok := cra.metaCache.GetPoolInfo(poolName)
 	if !ok {
+		klog.Warningf("pool %s doesn't exist in meta cache, it's a new pool")
 		return nil
 	}
 

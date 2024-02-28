@@ -469,6 +469,7 @@ func (cra *cpuResourceAdvisor) assignShareContainerToRegions(ci *types.Container
 		}
 
 		r := region.NewQoSRegionIsolation(ci, regionName, cra.conf, cra.extraConf, numaID, cra.metaCache, cra.metaServer, cra.emitter)
+		klog.Infof("create a new isolation pool (%s/%s) for container %s/%s", r.OwnerPoolName(), r.Name(), ci.PodUID, ci.ContainerName)
 		return []region.QoSRegion{r}, nil
 	}
 
@@ -480,6 +481,7 @@ func (cra *cpuResourceAdvisor) assignShareContainerToRegions(ci *types.Container
 
 	// create one region by owner pool name
 	r := region.NewQoSRegionShare(ci, cra.conf, cra.extraConf, numaID, cra.metaCache, cra.metaServer, cra.emitter)
+	klog.Infof("create a new share pool (%s) for container %s/%s", r.OwnerPoolName(), ci.PodUID, ci.ContainerName)
 	return []region.QoSRegion{r}, nil
 }
 

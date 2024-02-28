@@ -21,13 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/kubelet/util/format"
-
 	"github.com/kubewharf/katalyst-api/pkg/consts"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/advisorsvc"
 	"github.com/kubewharf/katalyst-core/pkg/agent/qrm-plugins/cpu/dynamicpolicy/cpuadvisor"
@@ -39,6 +32,11 @@ import (
 	"github.com/kubewharf/katalyst-core/pkg/metrics"
 	"github.com/kubewharf/katalyst-core/pkg/util/general"
 	"github.com/kubewharf/katalyst-core/pkg/util/machine"
+	"google.golang.org/grpc"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -261,9 +259,14 @@ func (cs *cpuServer) updateContainerInfo(podUID string, containerName string, po
 		ci.QoSLevel = qosLevel
 	}
 
-	if ci.OriginOwnerPoolName == "" {
-		general.Infof("%s OriginOwnerPoolName %s, OwnerPoolName: %s", format.Pod(pod), ci.OriginOwnerPoolName, ci.OwnerPoolName)
-		ci.OriginOwnerPoolName = info.OwnerPoolName
+	// get origin owner pool name according to the qos conf
+	originOwnerPoolName, err := cs.qosConf.GetSpecifiedPoolNameForPod(pod)
+	if err != nil {
+		return fmt.Errorf("container %v/%v get origin owner pool name failed", podUID, containerName)
+	}
+	if ci.OriginOwnerPoolName != originOwnerPoolName {
+		general.Infof("OriginOwnerPoolName has change from %s to %s", ci.OriginOwnerPoolName, originOwnerPoolName)
+		ci.OriginOwnerPoolName = originOwnerPoolName
 	}
 
 	// fill in topology aware assignment for containers with owner pool

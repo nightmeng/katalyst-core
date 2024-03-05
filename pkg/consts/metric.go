@@ -75,12 +75,18 @@ const (
 
 // System rootfs metrics
 const (
-	MetricsSystemRootfsAvailable  = "available.rootfs.system"
-	MetricsSystemRootfsCapacity   = "capacity.rootfs.system"
-	MetricsSystemRootfsUsed       = "used.rootfs.system"
-	MetricsSystemRootfsInodes     = "inodes.rootfs.system"
-	MetricsSystemRootfsInodesFree = "free.inodes.rootfs.system"
-	MetricsSystemRootfsInodesUsed = "used.inodes.rootfs.system"
+	MetricsNodeFsAvailable   = "available.rootfs.node"
+	MetricsNodeFsCapacity    = "capacity.rootfs.node"
+	MetricsNodeFsUsed        = "used.rootfs.node"
+	MetricsNodeFsInodes      = "inodes.rootfs.node"
+	MetricsNodeFsInodesFree  = "free.inodes.rootfs.node"
+	MetricsNodeFsInodesUsed  = "used.inodes.rootfs.node"
+	MetricsImageFsAvailable  = "available.rootfs.image"
+	MetricsImageFsCapacity   = "capacity.rootfs.image"
+	MetricsImageFsUsed       = "used.rootfs.image"
+	MetricsImageFsInodes     = "inodes.rootfs.image"
+	MetricsImageFsInodesFree = "free.inodes.rootfs.image"
+	MetricsImageFsInodesUsed = "used.inodes.rootfs.image"
 )
 
 // System numa metrics

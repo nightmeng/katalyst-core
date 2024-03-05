@@ -66,7 +66,10 @@ func (p *KubeletSummaryProvisioner) sample(ctx context.Context) {
 		return
 	}
 
-	p.processNodeRootfsStats(summary.Node.Fs)
+	p.processNodeFsStats(summary.Node.Fs)
+	if summary.Node.Runtime != nil {
+		p.processImageFsStats(summary.Node.Runtime.ImageFs)
+	}
 
 	for _, podStats := range summary.Pods {
 		for _, volumeStats := range podStats.VolumeStats {
@@ -80,29 +83,60 @@ func (p *KubeletSummaryProvisioner) sample(ctx context.Context) {
 	}
 }
 
-func (p *KubeletSummaryProvisioner) processNodeRootfsStats(nodeRootfsStats *statsapi.FsStats) {
+func (p *KubeletSummaryProvisioner) processNodeFsStats(nodeRootfsStats *statsapi.FsStats) {
+	if nodeRootfsStats == nil {
+		return
+	}
 	updateTime := nodeRootfsStats.Time.Time
 	if nodeRootfsStats.AvailableBytes != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: float64(*nodeRootfsStats.AvailableBytes), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: float64(*nodeRootfsStats.AvailableBytes), Time: &updateTime})
 	}
 	if nodeRootfsStats.CapacityBytes != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: float64(*nodeRootfsStats.CapacityBytes), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: float64(*nodeRootfsStats.CapacityBytes), Time: &updateTime})
 	}
 	if nodeRootfsStats.UsedBytes != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.UsedBytes), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.UsedBytes), Time: &updateTime})
 	}
 	if nodeRootfsStats.InodesFree != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesFree), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesFree), Time: &updateTime})
 	}
 	if nodeRootfsStats.InodesUsed != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesUsed), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: float64(*nodeRootfsStats.InodesUsed), Time: &updateTime})
 	}
 	if nodeRootfsStats.Inodes != nil {
-		p.metricStore.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: float64(*nodeRootfsStats.Inodes), Time: &updateTime})
+		p.metricStore.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: float64(*nodeRootfsStats.Inodes), Time: &updateTime})
+	}
+}
+
+func (p *KubeletSummaryProvisioner) processImageFsStats(imageFsStats *statsapi.FsStats) {
+	if imageFsStats == nil {
+		return
+	}
+	updateTime := imageFsStats.Time.Time
+	if imageFsStats.AvailableBytes != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsAvailable, utilmetric.MetricData{Value: float64(*imageFsStats.AvailableBytes), Time: &updateTime})
+	}
+	if imageFsStats.CapacityBytes != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsCapacity, utilmetric.MetricData{Value: float64(*imageFsStats.CapacityBytes), Time: &updateTime})
+	}
+	if imageFsStats.UsedBytes != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsUsed, utilmetric.MetricData{Value: float64(*imageFsStats.UsedBytes), Time: &updateTime})
+	}
+	if imageFsStats.InodesFree != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsInodesFree, utilmetric.MetricData{Value: float64(*imageFsStats.InodesFree), Time: &updateTime})
+	}
+	if imageFsStats.InodesUsed != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsInodesUsed, utilmetric.MetricData{Value: float64(*imageFsStats.InodesUsed), Time: &updateTime})
+	}
+	if imageFsStats.Inodes != nil {
+		p.metricStore.SetNodeMetric(consts.MetricsImageFsInodes, utilmetric.MetricData{Value: float64(*imageFsStats.Inodes), Time: &updateTime})
 	}
 }
 
 func (p *KubeletSummaryProvisioner) processVolumeStats(podUID string, volumeStats *statsapi.VolumeStats) {
+	if volumeStats == nil {
+		return
+	}
 	updateTime := volumeStats.Time.Time
 	if volumeStats.AvailableBytes != nil {
 		p.metricStore.SetPodVolumeMetric(podUID, volumeStats.Name, consts.MetricsPodVolumeAvailable, utilmetric.MetricData{Value: float64(*volumeStats.AvailableBytes), Time: &updateTime})
@@ -125,7 +159,7 @@ func (p *KubeletSummaryProvisioner) processVolumeStats(podUID string, volumeStat
 }
 
 func (p *KubeletSummaryProvisioner) processContainerRootfsStats(podUID string, containerStats *statsapi.ContainerStats) {
-	if containerStats.Rootfs == nil {
+	if containerStats == nil || containerStats.Rootfs == nil {
 		return
 	}
 	updateTime := containerStats.Rootfs.Time.Time
@@ -150,7 +184,7 @@ func (p *KubeletSummaryProvisioner) processContainerRootfsStats(podUID string, c
 }
 
 func (p *KubeletSummaryProvisioner) processContainerLogsStats(podUID string, containerStats *statsapi.ContainerStats) {
-	if containerStats.Logs == nil {
+	if containerStats == nil || containerStats.Logs == nil {
 		return
 	}
 	updateTime := containerStats.Logs.Time.Time

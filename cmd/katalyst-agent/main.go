@@ -18,10 +18,9 @@ package main
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/spf13/pflag"
 	cliflag "k8s.io/component-base/cli/flag"
+	"os"
 
 	"github.com/kubewharf/katalyst-core/cmd/katalyst-agent/app"
 	"github.com/kubewharf/katalyst-core/cmd/katalyst-agent/app/options"

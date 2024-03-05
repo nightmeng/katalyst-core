@@ -100,13 +100,13 @@ func TestPodRootfsPressureEvictionPlugin_ThresholdMetNotMet(t *testing.T) {
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -132,13 +132,13 @@ func TestPodRootfsPressureEvictionPlugin_ThresholdMetUsedMet(t *testing.T) {
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -164,13 +164,13 @@ func TestPodRootfsPressureEvictionPlugin_ThresholdMetInodesMet(t *testing.T) {
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -196,13 +196,13 @@ func TestPodRootfsPressureEvictionPlugin_ThresholdMet(t *testing.T) {
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -230,13 +230,13 @@ func TestPodRootfsPressureEvictionPlugin_ThresholdMetMetricDataExpire(t *testing
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000, Time: &metricTime})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000, Time: &metricTime})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000, Time: &metricTime})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000, Time: &metricTime})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000, Time: &metricTime})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000, Time: &metricTime})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000, Time: &metricTime})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.7},
@@ -290,13 +290,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsNotMet(t *testing.T) 
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -323,13 +323,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsMet(t *testing.T) {
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -364,13 +364,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsUsedMet(t *testing.T)
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -405,13 +405,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsInodesMet(t *testing.
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -446,13 +446,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsUsedMetProtection(t *
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -552,13 +552,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsInodesMetProtection(t
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:          &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -656,13 +656,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsMetReclaimedPriority(
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:                 &evictionapi.ThresholdValue{Percentage: 0.3},
@@ -812,13 +812,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsInodesMetReclaimedPri
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:                       &evictionapi.ThresholdValue{Percentage: 0.1},
@@ -970,13 +970,13 @@ func TestPodRootfsPressureEvictionPlugin_GetTopEvictionPodsMetExpire(t *testing.
 	emitter := metrics.DummyMetrics{}
 	fakeFetcher := metric.NewFakeMetricsFetcher(emitter).(*metric.FakeMetricsFetcher)
 	// create metric data without time.
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsAvailable, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsCapacity, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsAvailable, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsCapacity, utilmetric.MetricData{Value: 10000})
 
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesFree, utilmetric.MetricData{Value: 2000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodesUsed, utilmetric.MetricData{Value: 8000})
-	fakeFetcher.SetNodeMetric(consts.MetricsSystemRootfsInodes, utilmetric.MetricData{Value: 10000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesFree, utilmetric.MetricData{Value: 2000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodesUsed, utilmetric.MetricData{Value: 8000})
+	fakeFetcher.SetNodeMetric(consts.MetricsNodeFsInodes, utilmetric.MetricData{Value: 10000})
 
 	tc := &testConf{
 		minimumFreeThreshold:       &evictionapi.ThresholdValue{Percentage: 0.3},

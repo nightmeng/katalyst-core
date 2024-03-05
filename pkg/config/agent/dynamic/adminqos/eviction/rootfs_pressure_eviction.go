@@ -30,8 +30,10 @@ import (
 
 type RootfsPressureEvictionConfiguration struct {
 	EnableRootfsPressureEviction               bool
-	MinimumFreeThreshold                       *evictionapi.ThresholdValue
-	MinimumInodesFreeThreshold                 *evictionapi.ThresholdValue
+	MinimumNodeFsFreeThreshold                 *evictionapi.ThresholdValue
+	MinimumNodeFsInodesFreeThreshold           *evictionapi.ThresholdValue
+	MinimumImageFsFreeThreshold                *evictionapi.ThresholdValue
+	MinimumImageFsInodesFreeThreshold          *evictionapi.ThresholdValue
 	PodMinimumUsedThreshold                    *evictionapi.ThresholdValue
 	PodMinimumInodesUsedThreshold              *evictionapi.ThresholdValue
 	ReclaimedQoSPodUsedPriorityThreshold       *evictionapi.ThresholdValue
@@ -50,20 +52,36 @@ func (c *RootfsPressureEvictionConfiguration) ApplyTo(conf *crd.DynamicConfigCRD
 		if config.EnableRootfsPressureEviction != nil {
 			c.EnableRootfsPressureEviction = *config.EnableRootfsPressureEviction
 		}
-		if config.MinimumFreeThreshold != "" {
-			thresholdValue, err := ParseThresholdValue(config.MinimumFreeThreshold)
+		if config.MinimumNodeFsFreeThreshold != "" {
+			thresholdValue, err := ParseThresholdValue(config.MinimumNodeFsFreeThreshold)
 			if err == nil {
-				c.MinimumFreeThreshold = thresholdValue
+				c.MinimumNodeFsFreeThreshold = thresholdValue
 			} else {
-				general.Warningf("failed to parse minimumFreeThreshold, ignore this configuration: %q", err)
+				general.Warningf("failed to parse minimumNodeFsFreeThreshold, ignore this configuration: %q", err)
 			}
 		}
-		if config.MinimumInodesFreeThreshold != "" {
-			thresholdValue, err := ParseThresholdValue(config.MinimumInodesFreeThreshold)
+		if config.MinimumNodeFsInodesFreeThreshold != "" {
+			thresholdValue, err := ParseThresholdValue(config.MinimumNodeFsInodesFreeThreshold)
 			if err == nil {
-				c.MinimumInodesFreeThreshold = thresholdValue
+				c.MinimumNodeFsInodesFreeThreshold = thresholdValue
 			} else {
-				general.Warningf("failed to parse minimumInodesFreeThreshold, ignore this configuration: %q", err)
+				general.Warningf("failed to parse minimumNodeFsInodesFreeThreshold, ignore this configuration: %q", err)
+			}
+		}
+		if config.MinimumImageFsFreeThreshold != "" {
+			thresholdValue, err := ParseThresholdValue(config.MinimumImageFsFreeThreshold)
+			if err == nil {
+				c.MinimumImageFsFreeThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse minimumImageFsFreeThreshold, ignore this configuration: %q", err)
+			}
+		}
+		if config.MinimumImageFsInodesFreeThreshold != "" {
+			thresholdValue, err := ParseThresholdValue(config.MinimumImageFsInodesFreeThreshold)
+			if err == nil {
+				c.MinimumImageFsInodesFreeThreshold = thresholdValue
+			} else {
+				general.Warningf("failed to parse minimumImageFsInodesFreeThreshold, ignore this configuration: %q", err)
 			}
 		}
 		if config.PodMinimumUsedThreshold != "" {

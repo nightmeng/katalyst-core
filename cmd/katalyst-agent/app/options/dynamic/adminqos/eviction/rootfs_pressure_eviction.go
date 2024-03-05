@@ -17,10 +17,9 @@ limitations under the License.
 package eviction
 
 import (
+	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/adminqos/eviction"
 	"github.com/pkg/errors"
 	cliflag "k8s.io/component-base/cli/flag"
-
-	"github.com/kubewharf/katalyst-core/pkg/config/agent/dynamic/adminqos/eviction"
 )
 
 const (
@@ -35,8 +34,10 @@ const (
 
 type RootfsPressureEvictionOptions struct {
 	EnableRootfsPressureEviction               bool
-	MinimumFreeThreshold                       string
-	MinimumInodesFreeThreshold                 string
+	MinimumNodeFsFreeThreshold                 string
+	MinimumNodeFsInodesFreeThreshold           string
+	MinimumImageFsFreeThreshold                string
+	MinimumImageFsInodesFreeThreshold          string
 	PodMinimumUsedThreshold                    string
 	PodMinimumInodesUsedThreshold              string
 	ReclaimedQoSPodUsedPriorityThreshold       string
@@ -47,8 +48,8 @@ type RootfsPressureEvictionOptions struct {
 func NewRootfsPressureEvictionOptions() *RootfsPressureEvictionOptions {
 	return &RootfsPressureEvictionOptions{
 		EnableRootfsPressureEviction:               defaultEnableRootfsEviction,
-		MinimumFreeThreshold:                       defaultMinimumFreeThreshold,
-		MinimumInodesFreeThreshold:                 defaultMinimumInodesFreeThreshold,
+		MinimumNodeFsFreeThreshold:                 defaultMinimumFreeThreshold,
+		MinimumNodeFsInodesFreeThreshold:           defaultMinimumInodesFreeThreshold,
 		PodMinimumUsedThreshold:                    defaultPodMinimumUsedThreshold,
 		PodMinimumInodesUsedThreshold:              defaultPodMinimumInodesUsedThreshold,
 		ReclaimedQoSPodUsedPriorityThreshold:       defaultReclaimedQoSPodUsedPriorityThreshold,
@@ -61,10 +62,14 @@ func (o *RootfsPressureEvictionOptions) AddFlags(fss *cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("eviction-rootfs-pressure")
 	fs.BoolVar(&o.EnableRootfsPressureEviction, "eviction-rootfs-enable", false,
 		"set true to enable rootfs pressure eviction")
-	fs.StringVar(&o.MinimumFreeThreshold, "eviction-rootfs-minimum-free", "",
-		"the minimum rootfs free threshold for nodes. once the rootfs free space of current node is lower than this threshold, the eviction manager will try to evict some pods. example 200G, 10%")
-	fs.StringVar(&o.MinimumInodesFreeThreshold, "eviction-rootfs-minimum-inodes-free", "",
-		"the minimum rootfs inodes free for nodes. once the rootfs free inodes of current node is lower than this threshold, the eviction manager will try to evict some pods. example 20000, 10%")
+	fs.StringVar(&o.MinimumNodeFsFreeThreshold, "eviction-rootfs-minimum-nodefs-free", "",
+		"the minimum node rootfs free threshold for nodes. once the node rootfs free space of current node is lower than this threshold, the eviction manager will try to evict some pods. example 200G, 10%")
+	fs.StringVar(&o.MinimumNodeFsInodesFreeThreshold, "eviction-rootfs-minimum-nodefs-inodes-free", "",
+		"the minimum node rootfs inodes free for nodes. once the node rootfs free inodes of current node is lower than this threshold, the eviction manager will try to evict some pods. example 20000, 10%")
+	fs.StringVar(&o.MinimumImageFsFreeThreshold, "eviction-rootfs-minimum-imagefs-free", "",
+		"the minimum image rootfs free threshold for nodes. once the image rootfs free space of current node is lower than this threshold, the eviction manager will try to evict some pods. example 200G, 10%")
+	fs.StringVar(&o.MinimumImageFsInodesFreeThreshold, "eviction-rootfs-minimum-imagefs-inodes-free", "",
+		"the minimum image rootfs inodes free for nodes. once the image rootfs free inodes of current node is lower than this threshold, the eviction manager will try to evict some pods. example 20000, 10%")
 	fs.StringVar(&o.PodMinimumUsedThreshold, "eviction-rootfs-pod-minimum-used", "",
 		"the minimum rootfs used for pod. the eviction manager will ignore this pod if its rootfs used in bytes is lower than this threshold. example 500M, 1%")
 	fs.StringVar(&o.PodMinimumInodesUsedThreshold, "eviction-rootfs-pod-minimum-inodes-used", "",
@@ -79,19 +84,33 @@ func (o *RootfsPressureEvictionOptions) AddFlags(fss *cliflag.NamedFlagSets) {
 
 func (o *RootfsPressureEvictionOptions) ApplyTo(c *eviction.RootfsPressureEvictionConfiguration) error {
 	c.EnableRootfsPressureEviction = o.EnableRootfsPressureEviction
-	if o.MinimumFreeThreshold != "" {
-		value, err := eviction.ParseThresholdValue(o.MinimumFreeThreshold)
+	if o.MinimumNodeFsFreeThreshold != "" {
+		value, err := eviction.ParseThresholdValue(o.MinimumNodeFsFreeThreshold)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimum-free'")
+			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimum-node-free'")
 		}
-		c.MinimumFreeThreshold = value
+		c.MinimumNodeFsFreeThreshold = value
 	}
-	if o.MinimumInodesFreeThreshold != "" {
-		value, err := eviction.ParseThresholdValue(o.MinimumInodesFreeThreshold)
+	if o.MinimumNodeFsInodesFreeThreshold != "" {
+		value, err := eviction.ParseThresholdValue(o.MinimumNodeFsInodesFreeThreshold)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimm-inodes-free'")
+			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimum-node-inodes-free'")
 		}
-		c.MinimumInodesFreeThreshold = value
+		c.MinimumNodeFsInodesFreeThreshold = value
+	}
+	if o.MinimumImageFsFreeThreshold != "" {
+		value, err := eviction.ParseThresholdValue(o.MinimumImageFsFreeThreshold)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimum-image-free'")
+		}
+		c.MinimumImageFsFreeThreshold = value
+	}
+	if o.MinimumImageFsInodesFreeThreshold != "" {
+		value, err := eviction.ParseThresholdValue(o.MinimumImageFsInodesFreeThreshold)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse option: 'eviction-rootfs-minimm-image-inodes-free'")
+		}
+		c.MinimumImageFsInodesFreeThreshold = value
 	}
 	if o.PodMinimumUsedThreshold != "" {
 		value, err := eviction.ParseThresholdValue(o.PodMinimumUsedThreshold)

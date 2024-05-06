@@ -195,12 +195,13 @@ type QoSRegionBase struct {
 
 	// idle: true if containers in the region is not running as usual, maybe there is no incoming business traffic
 	idle atomic.Bool
+
+	isNumaBinding bool
 }
 
 // NewQoSRegionBase returns a base qos region instance with common region methods
-func NewQoSRegionBase(name string, ownerPoolName string, regionType types.QoSRegionType, conf *config.Configuration, extraConf interface{},
-	metaReader metacache.MetaReader, metaServer *metaserver.MetaServer, emitter metrics.MetricEmitter,
-) *QoSRegionBase {
+func NewQoSRegionBase(name string, ownerPoolName string, regionType types.QoSRegionType, conf *config.Configuration, extraConf interface{}, isNumaBinding bool,
+	metaReader metacache.MetaReader, metaServer *metaserver.MetaServer, emitter metrics.MetricEmitter) *QoSRegionBase {
 	r := &QoSRegionBase{
 		conf:          conf,
 		name:          name,
@@ -226,6 +227,8 @@ func NewQoSRegionBase(name string, ownerPoolName string, regionType types.QoSReg
 		enableBorweinModel: conf.PolicyRama.EnableBorwein,
 		throttled:          *atomic.NewBool(false),
 		idle:               *atomic.NewBool(false),
+
+		isNumaBinding: isNumaBinding,
 	}
 
 	r.initHeadroomPolicy(conf, extraConf, metaReader, metaServer, emitter)
@@ -305,6 +308,10 @@ func (r *QoSRegionBase) SetEssentials(essentials types.ResourceEssentials) {
 
 func (r *QoSRegionBase) SetThrottled(throttled bool) {
 	r.throttled.Store(throttled)
+}
+
+func (r *QoSRegionBase) IsNumaBinding() bool {
+	return r.isNumaBinding
 }
 
 func (r *QoSRegionBase) AddContainer(ci *types.ContainerInfo) error {
@@ -487,7 +494,7 @@ func getRegionNameFromMetaCache(ci *types.ContainerInfo, numaID int, metaReader 
 				}
 			}
 		}
-	} else if ci.IsNumaBinding() {
+	} else if ci.IsDedicatedNumaBinding() {
 		for regionName := range ci.RegionNames {
 			regionInfo, ok := metaReader.GetRegionInfo(regionName)
 			if ok && regionInfo.RegionType == types.QoSRegionTypeDedicatedNumaExclusive {
@@ -531,8 +538,7 @@ func (r *QoSRegionBase) initProvisionPolicy(conf *config.Configuration, extraCon
 
 // initHeadroomPolicy initializes headroom by adding additional policies into default ones
 func (r *QoSRegionBase) initHeadroomPolicy(conf *config.Configuration, extraConf interface{},
-	metaReader metacache.MetaReader, metaServer *metaserver.MetaServer, emitter metrics.MetricEmitter,
-) {
+	metaReader metacache.MetaReader, metaServer *metaserver.MetaServer, emitter metrics.MetricEmitter) {
 	configuredHeadroomPolicy, ok := conf.CPUAdvisorConfiguration.HeadroomPolicies[r.regionType]
 	if !ok {
 		klog.Warningf("[qosaware-cpu] failed to find headroom policies for region %v", r.regionType)
@@ -590,8 +596,7 @@ func (r *QoSRegionBase) getProvisionControlKnob() map[types.CPUProvisionPolicyNa
 
 // regulateProvisionControlKnob regulate provision control knob for each provision policy
 func (r *QoSRegionBase) regulateProvisionControlKnob(originControlKnob map[types.CPUProvisionPolicyName]types.ControlKnob,
-	lastControlKnob *types.ControlKnob,
-) {
+	lastControlKnob *types.ControlKnob) {
 	provisionPolicyResults := make(map[types.CPUProvisionPolicyName]*provisionPolicyResult)
 	firstValidPolicy := types.CPUProvisionPolicyNone
 	for _, internal := range r.provisionPolicies {
@@ -704,8 +709,7 @@ func (r *QoSRegionBase) getIndicators() (types.Indicator, error) {
 // getPodIndicatorTarget gets pod indicator target by given pod uid and indicator name,
 // if no performance target or indicator is found, it will return default target
 func (r *QoSRegionBase) getPodIndicatorTarget(ctx context.Context, podUID string,
-	indicatorName string, defaultTarget float64,
-) (*float64, error) {
+	indicatorName string, defaultTarget float64) (*float64, error) {
 	pod, err := r.metaServer.GetPod(ctx, podUID)
 	if err != nil {
 		return nil, err

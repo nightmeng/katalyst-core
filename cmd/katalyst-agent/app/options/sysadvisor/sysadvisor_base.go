@@ -31,15 +31,19 @@ import (
 
 // GenericSysAdvisorOptions holds the configurations for sysadvisor
 type GenericSysAdvisorOptions struct {
-	SysAdvisorPlugins  []string
-	StateFileDirectory string
+	SysAdvisorPlugins            []string
+	StateFileDirectory           string
+	ClearStateFileDirectory      bool
+	DisableShareCoresNumaBinding bool
 }
 
 // NewGenericSysAdvisorOptions creates a new Options with a default config.
 func NewGenericSysAdvisorOptions() *GenericSysAdvisorOptions {
 	return &GenericSysAdvisorOptions{
-		SysAdvisorPlugins:  []string{"*"},
-		StateFileDirectory: "/var/lib/katalyst/sys_advisor/",
+		SysAdvisorPlugins:            []string{"*"},
+		StateFileDirectory:           "/var/lib/katalyst/sys_advisor/",
+		ClearStateFileDirectory:      false,
+		DisableShareCoresNumaBinding: false,
 	}
 }
 
@@ -51,12 +55,16 @@ func (o *GenericSysAdvisorOptions) AddFlags(fss *cliflag.NamedFlagSets) {
 		"A list of sysadvisor plugins to enable. '*' enables all on-by-default sysadvisor plugins, 'foo' enables the sysadvisor plugin "+
 		"named 'foo', '-foo' disables the sysadvisor plugin named 'foo'"))
 	fs.StringVar(&o.StateFileDirectory, "state-dir", o.StateFileDirectory, "directory for sys advisor to store state file")
+	fs.BoolVar(&o.ClearStateFileDirectory, "clear-state-dir", o.ClearStateFileDirectory, "clear state file when starting up (only for rollback)")
+	fs.BoolVar(&o.DisableShareCoresNumaBinding, "disable-share-cores-numa-binding", o.DisableShareCoresNumaBinding, "disable share cores with NUMA binding feature")
 }
 
 // ApplyTo fills up config with options
 func (o *GenericSysAdvisorOptions) ApplyTo(c *sysadvisor.GenericSysAdvisorConfiguration) error {
 	c.SysAdvisorPlugins = o.SysAdvisorPlugins
 	c.StateFileDirectory = o.StateFileDirectory
+	c.ClearStateFileDirectory = o.ClearStateFileDirectory
+	c.DisableShareCoresNumaBinding = o.DisableShareCoresNumaBinding
 	return nil
 }
 

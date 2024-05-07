@@ -19,8 +19,10 @@ package server
 import (
 	"context"
 	"fmt"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 
 	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/metacache"
@@ -74,10 +76,16 @@ func NewQRMServer(advisorWrapper resource.ResourceAdvisor, conf *config.Configur
 
 func (qs *qrmServerWrapper) Run(ctx context.Context) {
 	for _, server := range qs.serversToRun {
-		if err := server.Start(); err != nil {
-			klog.Errorf("[qosaware-server] start %v failed: %v", server.Name(), err)
-			return
-		}
+		go func(server subQRMServer) {
+			wait.PollUntil(2*time.Second, func() (done bool, err error) {
+				klog.Infof("[qosaware-server] start qrm server: %s", server.Name())
+				if err := server.Start(); err != nil {
+					klog.Errorf("[qosaware-server] failed to start qrm server %s: %v", server.Name(), err)
+					return false, nil
+				}
+				return true, nil
+			}, ctx.Done())
+		}(server)
 	}
 	<-ctx.Done()
 

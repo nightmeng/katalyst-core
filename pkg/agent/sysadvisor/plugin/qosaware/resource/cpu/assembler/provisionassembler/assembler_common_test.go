@@ -17,6 +17,8 @@ limitations under the License.
 package provisionassembler
 
 import (
+	"github.com/kubewharf/katalyst-core/pkg/config"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"os"
 	"testing"
 
@@ -29,7 +31,6 @@ import (
 	"github.com/kubewharf/katalyst-core/cmd/katalyst-agent/app/options"
 	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/metacache"
 	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/plugin/qosaware/resource/cpu/region"
-	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/plugin/qosaware/resource/cpu/region/provisionpolicy"
 	"github.com/kubewharf/katalyst-core/pkg/agent/sysadvisor/types"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver"
 	"github.com/kubewharf/katalyst-core/pkg/metaserver/agent/metric"
@@ -142,74 +143,76 @@ func (fake *FakeRegion) GetControlEssentials() types.ControlEssentials {
 	return fake.controlEssentials
 }
 
+type testCasePoolConfig struct {
+	poolName      string
+	poolType      types.QoSRegionType
+	numa          machine.CPUSet
+	isNumaBinding bool
+	provision     types.ControlKnob
+}
+
 func TestAssembleProvision(t *testing.T) {
 	t.Parallel()
 
-	provisionpolicy.RegisterInitializer(types.CPUProvisionPolicyCanonical, provisionpolicy.NewPolicyCanonical)
-
-	conf, err := options.NewOptions().Config()
-	require.NoError(t, err)
-	require.NotNil(t, conf)
-
-	stateFileDir := "stateFileDir"
-	checkpointDir := "checkpointDir"
-
-	conf.GenericSysAdvisorConfiguration.StateFileDirectory = stateFileDir
-	conf.MetaServerConfiguration.CheckpointManagerDir = checkpointDir
-	conf.CPUShareConfiguration.RestrictRefPolicy = nil
-	conf.CPUAdvisorConfiguration.ProvisionPolicies = map[types.QoSRegionType][]types.CPUProvisionPolicyName{
-		types.QoSRegionTypeShare: {types.CPUProvisionPolicyCanonical},
-	}
-	conf.GetDynamicConfiguration().EnableReclaim = true
-	genericCtx, err := katalyst_base.GenerateFakeGenericContext([]runtime.Object{})
-	require.NoError(t, err)
-
-	metaServer, err := metaserver.NewMetaServer(genericCtx.Client, metrics.DummyMetrics{}, conf)
-	require.NoError(t, err)
-	defer func() {
-		os.RemoveAll(stateFileDir)
-		os.RemoveAll(checkpointDir)
-	}()
-
-	metaCache, err := metacache.NewMetaCacheImp(conf, metricspool.DummyMetricsEmitterPool{}, metric.NewFakeMetricsFetcher(metrics.DummyMetrics{}))
-	require.NoError(t, err)
-	ci := types.ContainerInfo{
-		PodUID:              "pod1",
-		ContainerName:       "container1",
-		QoSLevel:            consts.PodAnnotationQoSLevelSharedCores,
-		RegionNames:         sets.NewString("share-NUMA1"),
-		OriginOwnerPoolName: "share-NUMA1",
-		OwnerPoolName:       "share-NUMA1",
-		TopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
-		},
-		OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+	containerInfos := []types.ContainerInfo{
+		{
+			PodUID:              "pod1",
+			ContainerName:       "container1",
+			QoSLevel:            consts.PodAnnotationQoSLevelSharedCores,
+			RegionNames:         sets.NewString("share-NUMA1"),
+			OriginOwnerPoolName: "share-NUMA1",
+			OwnerPoolName:       "share-NUMA1",
+			TopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+			},
+			OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+			},
 		},
 	}
+	_ = containerInfos
 
-	metaCache.SetContainerInfo("pod1", "container1", &ci)
-
-	metaCache.SetPoolInfo("share-NUMA1", &types.PoolInfo{
-		PoolName: "share-NUMA1",
-		TopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+	poolInfos := map[string]types.PoolInfo{
+		"share-NUMA1": {
+			PoolName: "share-NUMA1",
+			TopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+			},
+			OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+			},
+			RegionNames: sets.NewString("share-NUMA1"),
 		},
-		OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8),
+		"share": {
+			PoolName: "share",
+			TopologyAwareAssignments: map[int]machine.CPUSet{
+				0: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+			},
+			OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
+				0: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+			},
 		},
-		RegionNames: sets.NewString("share-NUMA1"),
-	})
-
-	metaCache.SetPoolInfo("share", &types.PoolInfo{
-		PoolName: "share",
-		TopologyAwareAssignments: map[int]machine.CPUSet{
-			0: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+		"isolation-NUMA1": {
+			PoolName: "isolation-NUMA1",
+			TopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(20, 21, 22, 23),
+			},
+			OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(20, 21, 22, 23),
+			},
+			RegionNames: sets.NewString("isolation-NUMA1"),
 		},
-		OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
-			0: machine.NewCPUSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+		"isolation-NUMA1-pod2": {
+			PoolName: "isolation-NUMA1-pod2",
+			TopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(20, 21, 22, 23),
+			},
+			OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
+				1: machine.NewCPUSet(20, 21, 22, 23),
+			},
+			RegionNames: sets.NewString("isolation-NUMA1-pod2"),
 		},
-	})
+	}
 
 	share := NewFakeRegion("share", types.QoSRegionTypeShare, "share")
 	share.SetBindingNumas(machine.NewCPUSet(0))
@@ -223,13 +226,493 @@ func TestAssembleProvision(t *testing.T) {
 	shareNumaBinding.SetProvision(types.ControlKnob{
 		types.ControlKnobNonReclaimedCPUSize: {Value: 8},
 	})
-	// shareNumaBinding := region.NewQoSRegionShare(&ci, conf, nil, 1, metaCache, metaServer, metrics.DummyMetrics{})
-	require.True(t, shareNumaBinding.IsNumaBinding(), "failed to check share region IsNumaBinding")
-
-	shareNumaBinding.TryUpdateProvision()
-	regionMap := map[string]region.QoSRegion{
-		"share-NUMA1": shareNumaBinding,
-		"share":       share,
+	tests := []struct {
+		name            string
+		enableReclaimed bool
+		poolInfos       []testCasePoolConfig
+		expect          map[string]map[int]int
+	}{
+		{
+			name:            "test1",
+			enableReclaimed: true,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 6,
+				},
+				"share-NUMA1": {
+					1: 8,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 18,
+					1:  16,
+				},
+			},
+		},
+		{
+			name:            "test2",
+			enableReclaimed: false,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 20,
+				},
+				"share-NUMA1": {
+					1: 20,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 4,
+					1:  4,
+				},
+			},
+		},
+		{
+			name:            "test3",
+			enableReclaimed: true,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 6,
+				},
+				"share-NUMA1": {
+					1: 8,
+				},
+				"isolation-NUMA1": {
+					1: 8,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 18,
+					1:  8,
+				},
+			},
+		},
+		{
+			name:            "test4",
+			enableReclaimed: false,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 20,
+				},
+				"share-NUMA1": {
+					1: 10,
+				},
+				"isolation-NUMA1": {
+					1: 10,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 4,
+					1:  4,
+				},
+			},
+		},
+		{
+			name:            "test5",
+			enableReclaimed: false,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 15},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 20,
+				},
+				"share-NUMA1": {
+					1: 16,
+				},
+				"isolation-NUMA1": {
+					1: 4,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 4,
+					1:  4,
+				},
+			},
+		},
+		{
+			name:            "test6",
+			enableReclaimed: true,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 15},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 6,
+				},
+				"share-NUMA1": {
+					1: 15,
+				},
+				"isolation-NUMA1": {
+					1: 4,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 18,
+					1:  5,
+				},
+			},
+		},
+		{
+			name:            "test7",
+			enableReclaimed: true,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 4},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1-pod2",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 6,
+				},
+				"share-NUMA1": {
+					1: 4,
+				},
+				"isolation-NUMA1": {
+					1: 8,
+				},
+				"isolation-NUMA1-pod2": {
+					1: 8,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 18,
+					1:  4,
+				},
+			},
+		},
+		{
+			name:            "test8",
+			enableReclaimed: true,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1-pod2",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 6,
+				},
+				"share-NUMA1": {
+					1: 8,
+				},
+				"isolation-NUMA1": {
+					1: 4,
+				},
+				"isolation-NUMA1-pod2": {
+					1: 4,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 18,
+					1:  8,
+				},
+			},
+		},
+		{
+			name:            "test9",
+			enableReclaimed: false,
+			poolInfos: []testCasePoolConfig{
+				{
+					poolName:      "share",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(0),
+					isNumaBinding: false,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 6},
+					},
+				},
+				{
+					poolName:      "share-NUMA1",
+					poolType:      types.QoSRegionTypeShare,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSize: {Value: 8},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+				{
+					poolName:      "isolation-NUMA1-pod2",
+					poolType:      types.QoSRegionTypeIsolation,
+					numa:          machine.NewCPUSet(1),
+					isNumaBinding: true,
+					provision: types.ControlKnob{
+						types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
+						types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
+					},
+				},
+			},
+			expect: map[string]map[int]int{
+				"share": {
+					-1: 20,
+				},
+				"share-NUMA1": {
+					1: 10,
+				},
+				"isolation-NUMA1": {
+					1: 5,
+				},
+				"isolation-NUMA1-pod2": {
+					1: 5,
+				},
+				"reserve": {
+					-1: 0,
+				},
+				"reclaim": {
+					-1: 4,
+					1:  4,
+				},
+			},
+		},
 	}
 
 	reservedForReclaim := map[int]int{
@@ -244,179 +727,63 @@ func TestAssembleProvision(t *testing.T) {
 
 	nonBindingNumas := machine.NewCPUSet(0)
 
-	common := NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err := common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	require.Equal(t, 6, result.PoolEntries["share"][-1], "invalid share non-reclaimed")
-	require.Equal(t, 8, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	require.Equal(t, 18, result.PoolEntries["reclaim"][-1], "invalid share reclaimed")
-	require.Equal(t, 16, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
+	for i := range tests {
+		test := tests[i]
+		t.Run(test.name, func(t *testing.T) {
+			conf := generateTestConf(t, test.enableReclaimed)
 
-	conf.GetDynamicConfiguration().EnableReclaim = false
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	require.Equal(t, 20, result.PoolEntries["share"][-1], "invalid share non-reclaimed")
-	require.Equal(t, 20, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
+			genericCtx, err := katalyst_base.GenerateFakeGenericContext([]runtime.Object{})
+			require.NoError(t, err)
 
-	isolationNumaBinding := NewFakeRegion("isolation-NUMA1", types.QoSRegionTypeIsolation, "isolation-NUMA1")
-	isolationNumaBinding.SetBindingNumas(machine.NewCPUSet(1))
-	isolationNumaBinding.SetIsNumaBinding(true)
-	isolationNumaBinding.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
-		types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
-	})
-	require.True(t, isolationNumaBinding.IsNumaBinding(), "failed to check isolation region IsNumaBinding")
+			metaServer, err := metaserver.NewMetaServer(genericCtx.Client, metrics.DummyMetrics{}, conf)
+			require.NoError(t, err)
+			defer func() {
+				os.RemoveAll(conf.GenericSysAdvisorConfiguration.StateFileDirectory)
+				os.RemoveAll(conf.MetaServerConfiguration.CheckpointManagerDir)
+			}()
 
-	metaCache.SetPoolInfo("isolation-NUMA1", &types.PoolInfo{
-		PoolName: "isolation-NUMA1",
-		TopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(20, 21, 22, 23),
-		},
-		OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(20, 21, 22, 23),
-		},
-		RegionNames: sets.NewString("isolation-NUMA1"),
-	})
+			metaCache, err := metacache.NewMetaCacheImp(conf, metricspool.DummyMetricsEmitterPool{}, metric.NewFakeMetricsFetcher(metrics.DummyMetrics{}))
+			require.NoError(t, err)
 
-	regionMap = map[string]region.QoSRegion{
-		"share-NUMA1":     shareNumaBinding,
-		"share":           share,
-		"isolation-NUMA1": isolationNumaBinding,
+			regionMap := map[string]region.QoSRegion{}
+			for _, poolConfig := range test.poolInfos {
+				poolInfo, ok := poolInfos[poolConfig.poolName]
+				require.True(t, ok, "pool config doesn't exist")
+				require.NoError(t, metaCache.SetPoolInfo(poolInfo.PoolName, &poolInfo), "failed to set pool info %s", poolInfo.PoolName)
+				region := NewFakeRegion(poolConfig.poolName, poolConfig.poolType, poolConfig.poolName)
+				region.SetBindingNumas(poolConfig.numa)
+				region.SetIsNumaBinding(poolConfig.isNumaBinding)
+				region.SetProvision(poolConfig.provision)
+				region.TryUpdateProvision()
+				require.Equal(t, poolConfig.isNumaBinding, region.IsNumaBinding(), "invalid numa binding state")
+				regionMap[region.name] = region
+			}
+
+			common := NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
+			result, err := common.AssembleProvision()
+			require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
+			require.NotNil(t, result, "invalid assembler result")
+			t.Logf("%v", result)
+			require.Equal(t, test.expect, result.PoolEntries, "unexpected result")
+		})
 	}
+}
 
-	conf.GetDynamicConfiguration().EnableReclaim = true
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 8, isolation: 8, share: 8
-	require.Equal(t, 8, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	require.Equal(t, 8, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 8, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-	require.Equal(t, 6, result.PoolEntries["share"][-1], "invalid share non-reclaimed")
-	require.Equal(t, 18, result.PoolEntries["reclaim"][-1], "invalid share reclaimed")
+func generateTestConf(t *testing.T, enableReclaim bool) *config.Configuration {
+	conf, err := options.NewOptions().Config()
+	require.NoError(t, err)
+	require.NotNil(t, conf)
 
-	conf.GetDynamicConfiguration().EnableReclaim = false
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 4, isolation: 10, share: 10   the rest 4 cores is assigned to share and isolation pool
-	require.Equal(t, 10, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 10, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-	require.Equal(t, 20, result.PoolEntries["share"][-1], "invalid share non-reclaimed")
-	require.Equal(t, 4, result.PoolEntries["reclaim"][-1], "invalid share reclaimed")
+	suffix := rand.String(10)
+	stateFileDir := "stateFileDir." + suffix
+	checkpointDir := "checkpointDir." + suffix
 
-	shareNumaBinding.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSize: {Value: 15},
-	})
-	shareNumaBinding.TryUpdateProvision()
-
-	conf.GetDynamicConfiguration().EnableReclaim = false
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 4, isolation: 4, share: 16
-	require.Equal(t, 16, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 4, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-
-	conf.GetDynamicConfiguration().EnableReclaim = true
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 5, isolation: 4, share: 15
-	require.Equal(t, 15, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	require.Equal(t, 5, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 4, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-
-	isolationNumaBinding2 := NewFakeRegion("isolation-NUMA1-pod2", types.QoSRegionTypeIsolation, "isolation-NUMA1-pod2")
-	isolationNumaBinding2.SetBindingNumas(machine.NewCPUSet(1))
-	isolationNumaBinding2.SetIsNumaBinding(true)
-	isolationNumaBinding2.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSizeUpper: {Value: 8},
-		types.ControlKnobNonReclaimedCPUSizeLower: {Value: 4},
-	})
-	require.True(t, isolationNumaBinding.IsNumaBinding(), "failed to check isolation region IsNumaBinding")
-
-	metaCache.SetPoolInfo("isolation-NUMA1-pod2", &types.PoolInfo{
-		PoolName: "isolation-NUMA1-pod2",
-		TopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(20, 21, 22, 23),
-		},
-		OriginalTopologyAwareAssignments: map[int]machine.CPUSet{
-			1: machine.NewCPUSet(20, 21, 22, 23),
-		},
-		RegionNames: sets.NewString("isolation-NUMA1-pod2"),
-	})
-
-	regionMap = map[string]region.QoSRegion{
-		"share-NUMA1":          shareNumaBinding,
-		"share":                share,
-		"isolation-NUMA1":      isolationNumaBinding,
-		"isolation-NUMA1-pod2": isolationNumaBinding2,
+	conf.GenericSysAdvisorConfiguration.StateFileDirectory = stateFileDir
+	conf.MetaServerConfiguration.CheckpointManagerDir = checkpointDir
+	conf.CPUShareConfiguration.RestrictRefPolicy = nil
+	conf.CPUAdvisorConfiguration.ProvisionPolicies = map[types.QoSRegionType][]types.CPUProvisionPolicyName{
+		types.QoSRegionTypeShare: {types.CPUProvisionPolicyCanonical},
 	}
-
-	shareNumaBinding.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSize: {Value: 4},
-	})
-	shareNumaBinding.TryUpdateProvision()
-
-	conf.GetDynamicConfiguration().EnableReclaim = true
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 4, isolation: 8/8, share: 4
-	require.Equal(t, 4, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	// require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 8, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-	require.Equal(t, 8, result.PoolEntries["isolation-NUMA1-pod2"][1], "invalid isolation-NUMA1-pod2")
-	require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid reclaim")
-
-	shareNumaBinding.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSize: {Value: 8},
-	})
-	shareNumaBinding.TryUpdateProvision()
-	conf.GetDynamicConfiguration().EnableReclaim = true
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 8 isolation: 4/4, share: 8
-	require.Equal(t, 8, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	// require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 4, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-	require.Equal(t, 4, result.PoolEntries["isolation-NUMA1-pod2"][1], "invalid isolation-NUMA1-pod2")
-	require.Equal(t, 8, result.PoolEntries["reclaim"][1], "invalid reclaim")
-
-	shareNumaBinding.SetProvision(types.ControlKnob{
-		types.ControlKnobNonReclaimedCPUSize: {Value: 8},
-	})
-	shareNumaBinding.TryUpdateProvision()
-	conf.GetDynamicConfiguration().EnableReclaim = false
-	common = NewProvisionAssemblerCommon(conf, nil, &regionMap, &reservedForReclaim, &numaAvailable, &nonBindingNumas, metaCache, metaServer, metrics.DummyMetrics{})
-	result, err = common.AssembleProvision()
-	require.NoErrorf(t, err, "failed to AssembleProvision: %s", err)
-	require.NotNil(t, result, "invalid assembler result")
-	t.Logf("%v", result)
-	// reclaimed: 4, isolation: 4/4, share: 12
-	require.Equal(t, 10, result.PoolEntries["share-NUMA1"][1], "invalid share-NUMA1 non-reclaimed")
-	// require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid share-NUMA1 reclaimed")
-	require.Equal(t, 5, result.PoolEntries["isolation-NUMA1"][1], "invalid isolation-NUMA1")
-	require.Equal(t, 5, result.PoolEntries["isolation-NUMA1-pod2"][1], "invalid isolation-NUMA1-pod2")
-	require.Equal(t, 4, result.PoolEntries["reclaim"][1], "invalid reclaim")
+	conf.GetDynamicConfiguration().EnableReclaim = enableReclaim
+	return conf
 }

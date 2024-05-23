@@ -426,8 +426,10 @@ func (mc *MetaCacheImp) deleteContainer(podUID string, containerName string) boo
 }
 
 func (mc *MetaCacheImp) RemovePod(podUID string) error {
+	klog.Infof("[DEBUG] before get remove pod lock")
 	mc.podMutex.Lock()
 	defer mc.podMutex.Unlock()
+	klog.Infof("[DEBUG] after get remove pod lock")
 
 	containerEntries, ok := mc.podEntries[podUID]
 	if !ok {

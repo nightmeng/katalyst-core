@@ -227,6 +227,7 @@ func (bs *baseServer) RemovePod(_ context.Context, request *advisorsvc.RemovePod
 	if err != nil {
 		klog.Errorf("[qosaware-server] %v remove pod with error: %v", bs.name, err)
 	}
+	klog.Infof("[qosaware-server] %v remove pod %v success", bs.name, request.PodUid)
 
 	return &advisorsvc.RemovePodResponse{}, err
 }
@@ -244,6 +245,7 @@ func (bs *baseServer) AddContainer(_ context.Context, request *advisorsvc.Contai
 	if err != nil {
 		klog.Errorf("[qosaware-server] %v add container with error: %v", bs.name, err)
 	}
+	klog.Infof("[qosaware-server] %v add container successfully for request: %v", bs.name, general.ToString(request))
 
 	return &advisorsvc.AddContainerResponse{}, err
 }

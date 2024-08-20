@@ -40,6 +40,11 @@ import (
 	qosutil "github.com/kubewharf/katalyst-core/pkg/util/qos"
 )
 
+const (
+	PodAnnotationInplaceUpdateResizingKeyLegacy = "katalyst.cloud/pod-vpa-resizing"
+	PodAnnotationAggregatedRequestsKeyLegacy    = "katalyst.cloud/pod-aggregated-requests"
+)
+
 func (p *DynamicPolicy) sharedCoresAllocationHandler(ctx context.Context,
 	req *pluginapi.ResourceRequest,
 ) (*pluginapi.ResourceAllocationResponse, error) {
@@ -1093,7 +1098,30 @@ func (p *DynamicPolicy) applyPoolsAndIsolatedInfo(poolsCPUSet map[string]machine
 				newPodEntries[podUID] = make(state.ContainerEntries)
 			}
 
-			newPodEntries[podUID][containerName] = allocationInfo.Clone()
+			newAllocationInfo := allocationInfo.Clone()
+			if newAllocationInfo.Annotations != nil {
+				// update aggregated annotation
+				if _, ok := newAllocationInfo.Annotations[apiconsts.PodAnnotationAggregatedRequestsKey]; ok {
+					delete(newAllocationInfo.Annotations, PodAnnotationAggregatedRequestsKeyLegacy)
+				} else {
+					if value, ok := newAllocationInfo.Annotations[PodAnnotationAggregatedRequestsKeyLegacy]; ok {
+						newAllocationInfo.Annotations[apiconsts.PodAnnotationAggregatedRequestsKey] = value
+						delete(newAllocationInfo.Annotations, PodAnnotationAggregatedRequestsKeyLegacy)
+					}
+				}
+
+				// update inplace update resizing annotation
+				if _, ok := newAllocationInfo.Annotations[apiconsts.PodAnnotationInplaceUpdateResizingKey]; ok {
+					delete(newAllocationInfo.Annotations, PodAnnotationInplaceUpdateResizingKeyLegacy)
+				} else {
+					if value, ok := newAllocationInfo.Annotations[PodAnnotationInplaceUpdateResizingKeyLegacy]; ok {
+						newAllocationInfo.Annotations[apiconsts.PodAnnotationInplaceUpdateResizingKey] = value
+						delete(newAllocationInfo.Annotations, PodAnnotationInplaceUpdateResizingKeyLegacy)
+					}
+				}
+			}
+			newPodEntries[podUID][containerName] = newAllocationInfo
+
 			// adapt to old checkpoint without RequestQuantity property
 			newPodEntries[podUID][containerName].RequestQuantity = state.GetContainerRequestedCores()(allocationInfo)
 			switch allocationInfo.QoSLevel {

@@ -248,6 +248,12 @@ func NewDynamicPolicy(agentCtx *agent.GenericContext, conf *config.Configuration
 		return false, agent.ComponentStub{}, fmt.Errorf("dynamic policy new plugin wrapper failed with error: %v", err)
 	}
 
+	// rename old annotations
+	err = policyImplement.adjustAllocationEntries()
+	if err != nil {
+		return false, agent.ComponentStub{}, fmt.Errorf("adjustAllocationEntries in NewDynamicPolicy failed with error: %v", err)
+	}
+
 	return true, &agent.PluginWrapper{GenericPlugin: pluginWrapper}, nil
 }
 

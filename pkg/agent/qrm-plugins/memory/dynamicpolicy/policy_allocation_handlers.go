@@ -34,6 +34,11 @@ import (
 	qosutil "github.com/kubewharf/katalyst-core/pkg/util/qos"
 )
 
+const (
+	PodAnnotationInplaceUpdateResizingKeyLegacy = "katalyst.cloud/pod-vpa-resizing"
+	PodAnnotationAggregatedRequestsKeyLegacy    = "katalyst.cloud/pod-aggregated-requests"
+)
+
 func (p *DynamicPolicy) sharedCoresAllocationHandler(ctx context.Context,
 	req *pluginapi.ResourceRequest,
 ) (*pluginapi.ResourceAllocationResponse, error) {
@@ -475,6 +480,29 @@ func (p *DynamicPolicy) adjustAllocationEntries() error {
 			} else if allocationInfo.QoSLevel != apiconsts.PodAnnotationQoSLevelSharedCores {
 				continue
 			}
+
+			if allocationInfo.Annotations != nil {
+				// update aggregated annotation
+				if _, ok := allocationInfo.Annotations[apiconsts.PodAnnotationAggregatedRequestsKey]; ok {
+					delete(allocationInfo.Annotations, PodAnnotationAggregatedRequestsKeyLegacy)
+				} else {
+					if value, ok := allocationInfo.Annotations[PodAnnotationAggregatedRequestsKeyLegacy]; ok {
+						allocationInfo.Annotations[apiconsts.PodAnnotationAggregatedRequestsKey] = value
+						delete(allocationInfo.Annotations, PodAnnotationAggregatedRequestsKeyLegacy)
+					}
+				}
+
+				// update inplace update resizing annotation
+				if _, ok := allocationInfo.Annotations[apiconsts.PodAnnotationInplaceUpdateResizingKey]; ok {
+					delete(allocationInfo.Annotations, PodAnnotationInplaceUpdateResizingKeyLegacy)
+				} else {
+					if value, ok := allocationInfo.Annotations[PodAnnotationInplaceUpdateResizingKeyLegacy]; ok {
+						allocationInfo.Annotations[apiconsts.PodAnnotationInplaceUpdateResizingKey] = value
+						delete(allocationInfo.Annotations, PodAnnotationInplaceUpdateResizingKeyLegacy)
+					}
+				}
+			}
+
 			if allocationInfo.QoSLevel == apiconsts.PodAnnotationQoSLevelSharedCores {
 				if allocationInfo.CheckNumaBinding() {
 					if allocationInfo.CheckSideCar() {

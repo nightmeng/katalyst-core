@@ -263,6 +263,12 @@ func NewDynamicPolicy(agentCtx *agent.GenericContext, conf *config.Configuration
 	memoryadvisor.RegisterControlKnobHandler(memoryadvisor.ControlKnowKeyMemoryOffloading,
 		memoryadvisor.ControlKnobHandlerWithChecker(policyImplement.handleAdvisorMemoryOffloading))
 
+	// update old annotations
+	err = policyImplement.adjustAllocationEntries()
+	if err != nil {
+		return false, agent.ComponentStub{}, fmt.Errorf("adjustAllocationEntries in NewDynamicPolicy failed with error: %v", err)
+	}
+
 	return true, &agent.PluginWrapper{GenericPlugin: pluginWrapper}, nil
 }
 

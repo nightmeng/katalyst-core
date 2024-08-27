@@ -784,7 +784,7 @@ func (p *DynamicPolicy) calculateHintsForNUMABindingSharedCores(reqInt int, podE
 ) (map[string]*pluginapi.ListOfTopologyHints, error) {
 	nonBindingNUMAsCPUQuantity := machineState.GetFilteredAvailableCPUSet(p.reservedCPUs, nil, state.CheckNUMABinding).Size()
 	nonBindingNUMAs := machineState.GetFilteredNUMASet(state.CheckNUMABinding)
-	nonBindingSharedRequestedQuantity := state.GetNonBindingSharedRequestedQuantityFromPodEntries(podEntries)
+	nonBindingSharedRequestedQuantity := state.GetNonBindingSharedRequestedQuantityFromPodEntries(podEntries, nil)
 
 	numaNodes := p.filterNUMANodesByNonBindingSharedRequestedQuantity(nonBindingSharedRequestedQuantity,
 		nonBindingNUMAsCPUQuantity, nonBindingNUMAs, machineState,

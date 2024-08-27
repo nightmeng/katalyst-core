@@ -861,3 +861,17 @@ func TestCountAllocationInfosToPoolsQuantityMap(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUPreciseCeil(t *testing.T) {
+	t.Parallel()
+	require.Equal(t, 188, CPUPreciseCeil(188.0000000001))
+	require.Equal(t, 188, CPUPreciseCeil(187.9999999999))
+	require.Equal(t, 189, CPUPreciseCeil(188.001))
+	require.Equal(t, 188, CPUPreciseCeil(188.0001))
+	array := []float64{4, 1, 4, 0.83, 1, 2, 4, 4, 0.83, 4, 4, 4, 1, 4, 48, 1, 0.507, 0.625, 2, 1, 5.54, 2, 4, 4, 2, 1, 0.01, 4, 1, 0.658, 2}
+	sum := float64(0)
+	for _, v := range array {
+		sum += v
+	}
+	require.Equal(t, 118, CPUPreciseCeil(sum))
+}

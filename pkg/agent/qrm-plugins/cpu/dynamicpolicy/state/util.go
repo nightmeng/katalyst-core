@@ -171,8 +171,8 @@ func GetSharedQuantityMapFromPodEntries(podEntries PodEntries, ignoreAllocationI
 	return poolsQuantityMap, nil
 }
 
-// GetTotoalSharedQuantity returns total quanity shared_cores without numa_binding requested
-func GetNonBindingSharedRequestedQuantityFromPodEntries(podEntries PodEntries) int {
+// GetNonBindingSharedRequestedQuantityFromPodEntries returns total quanity shared_cores without numa_binding requested
+func GetNonBindingSharedRequestedQuantityFromPodEntries(podEntries PodEntries, newNonBindingSharedRequestedQuantity []float64) int {
 	var reqFloat64 float64 = 0
 
 	for _, entries := range podEntries {
@@ -189,7 +189,11 @@ func GetNonBindingSharedRequestedQuantityFromPodEntries(podEntries PodEntries) i
 		}
 	}
 
-	return int(math.Ceil(reqFloat64))
+	for i := range newNonBindingSharedRequestedQuantity {
+		reqFloat64 += newNonBindingSharedRequestedQuantity[i]
+	}
+
+	return CPUPreciseCeil(reqFloat64)
 }
 
 // GenerateMachineStateFromPodEntries returns NUMANodeMap for given resource based on
@@ -408,7 +412,7 @@ func CountAllocationInfosToPoolsQuantityMap(allocationInfos []*AllocationInfo,
 				poolsQuantityMap[poolName] = make(map[int]int)
 			}
 
-			poolsQuantityMap[poolName][numaID] += int(math.Ceil(preciseQuantity))
+			poolsQuantityMap[poolName][numaID] += CPUPreciseCeil(preciseQuantity)
 
 			// return err will abort the procedure,
 			// so there is no need to revert modifications made in parameter poolsQuantityMap
@@ -482,4 +486,15 @@ func checkCPUSetMap(map1, map2 map[int]machine.CPUSet) bool {
 		}
 	}
 	return true
+}
+
+// CPUPreciseCeil we can not use math.Ceil directly here, because the cpu requests are stored using floats,
+// there is a chance of precision issues during addition calculations.
+// in critical case:
+// - the allocatable cpu of the node is 122
+// - the sum of allocated cpu requests is 118.00000000000001 (after ceil is 119),
+// - the new pod request is 4
+// 119 + 4 > 122, so qrm will reject the new pod.
+func CPUPreciseCeil(request float64) int {
+	return int(math.Ceil(float64(int(request*1000)) / 1000))
 }

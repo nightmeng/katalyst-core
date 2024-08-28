@@ -221,8 +221,6 @@ func NewDynamicPolicy(agentCtx *agent.GenericContext, conf *config.Configuration
 		consts.PodAnnotationQoSLevelReclaimedCores: policyImplement.reclaimedCoresHintHandler,
 	}
 
-	state.SetContainerRequestedCores(policyImplement.getContainerRequestedCores)
-
 	if err := policyImplement.cleanPools(); err != nil {
 		return false, agent.ComponentStub{}, fmt.Errorf("cleanPools failed with error: %v", err)
 	}
@@ -1180,7 +1178,7 @@ func (p *DynamicPolicy) checkNormalShareCoresCpuResource(req *pluginapi.Resource
 		return false, fmt.Errorf("GetQuantityFromResourceReq failed with error: %v", err)
 	}
 
-	shareCoresAllocatedInt := state.GetNonBindingSharedRequestedQuantityFromPodEntries(p.state.GetPodEntries(), []float64{reqFloat64})
+	shareCoresAllocatedInt := state.GetNonBindingSharedRequestedQuantityFromPodEntries(p.state.GetPodEntries(), []float64{reqFloat64}, p.getContainerRequestedCores)
 
 	machineState := p.state.GetMachineState()
 	pooledCPUs := machineState.GetFilteredAvailableCPUSet(p.reservedCPUs,

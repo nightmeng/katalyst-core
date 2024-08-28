@@ -567,9 +567,6 @@ func TestGetSpecifiedPoolName(t *testing.T) {
 func TestCountAllocationInfosToPoolsQuantityMap(t *testing.T) {
 	t.Parallel()
 	testName := "test"
-	SetContainerRequestedCores(func(allocationInfo *AllocationInfo) float64 {
-		return allocationInfo.RequestQuantity
-	})
 
 	type args struct {
 		allocationInfos  []*AllocationInfo
@@ -851,7 +848,9 @@ func TestCountAllocationInfosToPoolsQuantityMap(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if err := CountAllocationInfosToPoolsQuantityMap(tt.args.allocationInfos, tt.args.poolsQuantityMap); (err != nil) != tt.wantErr {
+			if err := CountAllocationInfosToPoolsQuantityMap(tt.args.allocationInfos, tt.args.poolsQuantityMap, func(allocationInfo *AllocationInfo) float64 {
+				return allocationInfo.RequestQuantity
+			}); (err != nil) != tt.wantErr {
 				t.Errorf("CountAllocationInfosToPoolsQuantityMap() error = %v, wantErr %v", err, tt.wantErr)
 			} else if err == nil {
 				if !reflect.DeepEqual(tt.args.poolsQuantityMap, tt.want) {

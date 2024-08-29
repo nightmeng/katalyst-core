@@ -221,6 +221,22 @@ func (p *DynamicPolicy) numaBindingHintHandler(_ context.Context,
 		}
 	}
 
+	if hints == nil {
+		general.Infof("[LLR] failed to calculate hints for pod: %s/%s, container: %s",
+			req.PodNamespace, req.PodName, req.ContainerName)
+	} else {
+		memoryHints := hints[string(v1.ResourceMemory)]
+		if memoryHints == nil {
+			general.Infof("[LLR]memoryHints is nil, pod:%s/%s, container: %s",
+				req.PodNamespace, req.PodName, req.ContainerName)
+		} else if memoryHints.Hints == nil {
+			general.Infof("[LLR]memoryHints.Hints is nil, pod:%s/%s, container: %s",
+				req.PodNamespace, req.PodName, req.ContainerName)
+		} else {
+			general.Infof("[LLR]memoryHints.Hints len is %d, pod:%s/%s, container: %s",
+				len(memoryHints.Hints), req.PodNamespace, req.PodName, req.ContainerName)
+		}
+	}
 	general.Infof("memory hints for pod:%s/%s, container: %s success, hints: %v",
 		req.PodNamespace, req.PodName, req.ContainerName, hints)
 

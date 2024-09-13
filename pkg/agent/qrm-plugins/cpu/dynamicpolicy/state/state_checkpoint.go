@@ -18,6 +18,7 @@ package state
 
 import (
 	"fmt"
+	"github.com/kubewharf/katalyst-api/pkg/consts"
 	"path"
 	"reflect"
 	"sync"
@@ -100,6 +101,24 @@ func (sc *stateCheckpoint) restoreState(topology *machine.CPUTopology) error {
 	}
 
 	sc.cache.SetMachineState(generatedMachineState)
+	podEntries := checkpoint.PodEntries
+	for poolName, poolEntry := range podEntries {
+		if !poolEntry.IsPoolEntry() {
+			continue
+		}
+
+		entry := poolEntry[FakedContainerName]
+		if entry.QoSLevel == consts.PodAnnotationQoSLevelSharedCores {
+			if entry.Annotations != nil && entry.Annotations[consts.PodAnnotationMemoryEnhancementNumaBinding] == consts.PodAnnotationMemoryEnhancementNumaBindingEnable {
+				if poolName != PoolNameShare {
+					klog.Warningf("share pool %s is numa binding, but not share", poolName)
+					continue
+				}
+				delete(entry.Annotations, consts.PodAnnotationMemoryEnhancementNumaBinding)
+				klog.Warningf("clear share pool numa binding")
+			}
+		}
+	}
 	sc.cache.SetPodEntries(checkpoint.PodEntries)
 	sc.cache.SetAllowSharedCoresOverlapReclaimedCores(checkpoint.AllowSharedCoresOverlapReclaimedCores)
 
